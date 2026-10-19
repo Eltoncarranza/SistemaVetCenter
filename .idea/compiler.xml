@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="EUREKA-Server" />
+        <module name="GATEWAY-Service" />
+        <module name="NOTIFICATION-Service" />
+      </profile>
+      <profile name="Annotation profile for PRODUCTO-Service" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.38/lombok-1.18.38.jar" />
+        </processorPath>
+        <module name="PRODUCTO-Service" />
+        <module name="CITA-Service" />
+        <module name="PEDIDO-Service" />
+        <module name="MASCOTA-Service" />
+        <module name="MEDICAMENTO-Service" />
+        <module name="IDENTITY-Service" />
+        <module name="CLIENTE-Service" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="CITA-Service" options="-parameters" />
+      <module name="CLIENTE-Service" options="-parameters" />
+      <module name="EUREKA-Server" options="-parameters" />
+      <module name="GATEWAY-Service" options="-parameters" />
+      <module name="IDENTITY-Service" options="-parameters" />
+      <module name="MASCOTA-Service" options="-parameters" />
+      <module name="MEDICAMENTO-Service" options="-parameters" />
+      <module name="NOTIFICATION-Service" options="-parameters" />
+      <module name="PEDIDO-Service" options="-parameters" />
+      <module name="PRODUCTO-Service" options="-parameters" />
+    </option>
+  </component>
+</project>

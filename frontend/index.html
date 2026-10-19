@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VetCenter - Administrador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f7fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-x: hidden; }
+        .sidebar { height: 100vh; width: 260px; position: fixed; background-color: #152534; padding-top: 20px; display: flex; flex-direction: column; color: white; z-index: 1000; }
+        .sidebar .brand { padding: 0 20px; font-size: 24px; font-weight: bold; color: white; text-decoration: none; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+        .sidebar .brand i { color: #20c997; }
+        .sidebar .brand span { font-size: 12px; color: #a0aec0; display: block; font-weight: normal; margin-top: -5px;}
+        .sidebar .menu-label { font-size: 11px; color: #718096; padding-left: 20px; margin-bottom: 10px; letter-spacing: 1px; font-weight: bold; }
+        .sidebar a.nav-link { color: #cbd5e0; padding: 12px 20px; margin: 4px 10px; border-radius: 8px; display: flex; align-items: center; gap: 15px; font-size: 15px; transition: 0.3s; text-decoration: none;}
+        .sidebar a.nav-link:hover, .sidebar a.nav-link.active { background-color: #1f3b52; color: white; }
+        .sidebar a.nav-link.active { border-left: 4px solid #20c997; }
+        .sidebar .logout-btn { margin-top: auto; padding: 20px; }
+        .sidebar .logout-btn a { color: #fc8181; text-decoration: none; display: flex; align-items: center; gap: 10px; border: 1px solid #4a5568; padding: 10px; border-radius: 8px; justify-content: center; }
+        .sidebar .logout-btn a:hover { background-color: #e53e3e; color: white; border-color: #e53e3e; }
+        .main-content { margin-left: 260px; padding: 30px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .header-top h2 { font-weight: 800; margin: 0; color: #1a202c; }
+        .header-top p { color: #718096; margin: 0; font-size: 14px; }
+        .admin-avatar { width: 45px; height: 45px; background-color: #e6fffa; color: #198754; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .welcome-banner { background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%); color: white; border-radius: 15px; padding: 30px; margin-bottom: 30px; position: relative; overflow: hidden; }
+        .welcome-banner .badge-panel { background-color: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 15px; display: inline-block; }
+        .welcome-banner h3 { font-weight: 800; margin-bottom: 10px; }
+        .welcome-banner p { margin: 0; opacity: 0.9; font-size: 15px;}
+        .welcome-banner .bg-icon { position: absolute; right: 20px; bottom: -20px; font-size: 140px; opacity: 0.1; }
+        .kpi-card { background: white; border-radius: 16px; padding: 24px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: 100%; }
+        .kpi-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;}
+        .kpi-title { font-size: 16px; color: #4a5568; font-weight: 500;}
+        .kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .icon-clientes { background-color: #ccfbf1; color: #0d9488; }
+        .icon-mascotas { background-color: #e0e7ff; color: #4f46e5; }
+        .icon-medicamentos { background-color: #fef3c7; color: #d97706; }
+        .icon-citas { background-color: #ede9fe; color: #7c3aed; }
+        .kpi-value { font-size: 36px; font-weight: 800; color: #0f766e; margin-bottom: 5px; }
+        .kpi-desc { font-size: 14px; color: #718096; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .card { border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; background: white;}
+        .table th { color: #718096; font-weight: 600; font-size: 13px; border-bottom: 2px solid #edf2f7; text-transform: uppercase; letter-spacing: 0.5px;}
+        .table td { vertical-align: middle; font-size: 14px; color: #2d3748; }
+        .table-hover tbody tr:hover { background-color: #f7fafc; }
+        .badge-activo { background-color: #198754; color: white; padding: 5px 10px; border-radius: 6px; font-size: 12px;}
+        .btn-action { font-size: 12px; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; }
+        .calendar-container { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; }
+        .week-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 30px; }
+        .day-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .day-card:hover { border-color: #0f766e; }
+        .day-card.active { border-color: #0f766e; background-color: #f0fdf4; }
+        .day-name { font-size: 12px; color: #718096; text-transform: uppercase; margin-bottom: 5px; }
+        .day-number { font-size: 24px; font-weight: bold; color: #1a202c; margin-bottom: 5px; }
+        .day-status { font-size: 12px; color: #a0aec0; }
+        .appointments-list { min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #a0aec0; }
+        .nav-pills .nav-link { color: #4a5568; font-weight: 500; border: 1px solid #e2e8f0; margin-right: 10px; border-radius: 8px; padding: 10px 20px; background: white;}
+        .nav-pills .nav-link.active { background-color: #0f766e; color: white; border-color: #0f766e; }
+        .cita-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 15px; margin-bottom: 15px;}
+        .cita-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .cita-pendiente { background-color: #fef3c7; color: #d97706; }
+        .cita-confirmada { background-color: #d1fae5; color: #059669; }
+        .cita-hoy { background-color: #dbeafe; color: #2563eb; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <a href="#" class="brand"><i class="fa-solid fa-paw"></i><div>VetCenter<span>Administración</span></div></a>
+    <div class="menu-label">MENÚ PRINCIPAL</div>
+    <a href="#" class="nav-link active" onclick="mostrarSeccion('inicio', this)"><i class="fa-solid fa-border-all"></i> Inicio</a>
+    <a href="#" class="nav-link" onclick="mostrarSeccion('clientes', this)"><i class="fa-solid fa-users"></i> Clientes</a>
+    <a href="#" class="nav-link" onclick="mostrarSeccion('mascotas', this)"><i class="fa-regular fa-heart"></i> Mascotas</a>
+    <a href="tienda-admin.html" class="nav-link"><i class="fa-solid fa-store"></i> Tienda virtual</a>
+    <a href="#" class="nav-link" onclick="mostrarSeccion('calendario-citas', this)"><i class="fa-regular fa-calendar"></i> Calendario de citas</a>
+    <a href="#" class="nav-link" onclick="mostrarSeccion('citagestion', this)"><i class="fa-regular fa-calendar-check"></i> Gestión de citas</a>
+    <div class="logout-btn"><a href="login.html"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión</a></div>
+</div>
+
+<div class="main-content">
+    <div class="header-top">
+        <div>
+            <p><i class="fa-solid fa-house me-1"></i> VetCenter / Administración</p>
+            <h2>Bienvenido, Administrador Principal</h2>
+            <p>Gestiona las operaciones de tu centro veterinario.</p>
+        </div>
+        <div class="admin-avatar"><i class="fa-solid fa-user-tie"></i></div>
+    </div>
+
+    <!-- INICIO -->
+    <div id="sec-inicio" class="content-section active">
+        <div class="welcome-banner">
+            <div class="badge-panel"><i class="fa-solid fa-wand-magic-sparkles"></i> Panel de control</div>
+            <h3>Bienvenido al centro de control</h3>
+            <p>Consulta y supervisa clientes, mascotas, medicamentos y citas veterinarias desde un solo lugar.</p>
+            <i class="fa-solid fa-heart-pulse bg-icon"></i>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-3"><div class="kpi-card"><div class="kpi-header"><div class="kpi-title">Clientes</div><div class="kpi-icon icon-clientes"><i class="fa-solid fa-users"></i></div></div><div class="kpi-value" id="kpi-clientes">0</div><div class="kpi-desc">Clientes registrados</div></div></div>
+            <div class="col-md-3"><div class="kpi-card"><div class="kpi-header"><div class="kpi-title">Mascotas</div><div class="kpi-icon icon-mascotas"><i class="fa-regular fa-heart"></i></div></div><div class="kpi-value" id="kpi-mascotas">0</div><div class="kpi-desc">Mascotas registradas</div></div></div>
+            <div class="col-md-3"><div class="kpi-card"><div class="kpi-header"><div class="kpi-title">Medicamentos</div><div class="kpi-icon icon-medicamentos"><i class="fa-solid fa-pills"></i></div></div><div class="kpi-value" id="kpi-medicamentos">0</div><div class="kpi-desc">Productos del inventario</div></div></div>
+            <div class="col-md-3"><div class="kpi-card"><div class="kpi-header"><div class="kpi-title">Citas</div><div class="kpi-icon icon-citas"><i class="fa-regular fa-calendar-check"></i></div></div><div class="kpi-value" id="kpi-citas">0</div><div class="kpi-desc">Citas veterinarias</div></div></div>
+        </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div id="sec-clientes" class="content-section">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div><h4 class="fw-bold m-0">Clientes registrados</h4><p class="text-muted small m-0">Información de los clientes de VetCenter.</p></div>
+                <button class="btn btn-success" onclick="abrirModalNuevoCliente()"><i class="fa-solid fa-user-plus me-2"></i> Nuevo cliente</button>
+            </div>
+            <table class="table table-hover">
+                <thead><tr><th>Nombre</th><th>DNI</th><th>Correo</th><th>Teléfono</th><th>Rol</th><th>Acciones</th></tr></thead>
+                <tbody id="tablaClientes"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MASCOTAS -->
+    <div id="sec-mascotas" class="content-section">
+        <div class="mb-4">
+            <h3 class="fw-bold m-0"><i class="fa-regular fa-heart text-success me-2"></i> Gestión de mascotas</h3>
+        </div>
+
+        <div class="card p-4">
+            <div class="mb-4">
+                <h5 class="fw-bold m-0">Mascotas registradas</h5>
+                <p class="text-muted small m-0">Consulta los datos de las mascotas asociadas a tus clientes.</p>
+            </div>
+
+            <!-- Buscador -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <label class="form-label text-muted small fw-bold">Buscar mascota</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                        <input type="text" class="form-control" id="buscadorMascotas" onkeyup="filtrarMascotas()" placeholder="Nombre, especie o dueño...">
+                        <button class="btn btn-outline-secondary" onclick="limpiarBuscadorMascotas()"><i class="fa-solid fa-xmark me-1"></i> Limpiar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end mb-2">
+                <div class="text-muted small" id="contadorMascotas">Mostrando 0 de 0 mascotas</div>
+            </div>
+
+            <table class="table table-hover align-middle">
+                <thead style="background-color: #f8fafc;">
+                <tr>
+                    <th class="border-0 text-muted small py-3">Nombre</th>
+                    <th class="border-0 text-muted small py-3">Especie</th>
+                    <th class="border-0 text-muted small py-3">Raza o descripción</th>
+                    <th class="border-0 text-muted small py-3">Sexo</th>
+                    <th class="border-0 text-muted small py-3">Dueño</th>
+                </tr>
+                </thead>
+                <tbody id="tablaMascotas"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- CALENDARIO -->
+    <div id="sec-calendario-citas" class="content-section">
+        <div class="calendar-container">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div><h5 class="fw-bold mb-1">Calendario administrativo</h5><p class="text-muted small mb-0">Visualiza las citas veterinarias por día, semana o mes.</p></div>
+                <div class="btn-group" role="group"><button class="btn btn-outline-success">Día</button><button class="btn btn-success">Semana</button><button class="btn btn-outline-success">Mes</button></div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <button class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="text-center"><h6 class="fw-bold mb-0" id="rango-semana">...</h6><a href="#" class="text-success text-decoration-none small">Hoy</a></div>
+                <button class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4"><div class="p-3 border rounded-3 bg-white h-100"><div class="text-muted small mb-1">Hoy</div><div class="fs-3 fw-bold" id="cal-citas-hoy">0</div><div class="text-muted small">Citas del día</div></div></div>
+                <div class="col-md-4"><div class="p-3 border rounded-3 bg-white h-100"><div class="text-muted small mb-1">Pendientes</div><div class="fs-3 fw-bold" id="cal-citas-pendientes">0</div><div class="text-muted small">Por confirmar</div></div></div>
+                <div class="col-md-4"><div class="p-3 border rounded-3 bg-white h-100"><div class="text-muted small mb-1">Confirmadas</div><div class="fs-3 fw-bold" id="cal-citas-confirmadas">0</div><div class="text-muted small">Programadas</div></div></div>
+            </div>
+            <div class="week-days" id="dias-semana"></div>
+            <div class="border-top pt-4">
+                <div class="d-flex justify-content-between align-items-center mb-3"><h6 class="fw-bold m-0" id="titulo-dia-seleccionado">18 de Octubre de 2026</h6><span class="badge bg-light text-dark border" id="badge-citas-dia">0 citas</span></div>
+                <div class="appointments-list" id="lista-citas-dia"><i class="fa-regular fa-calendar-xmark fs-1 mb-2"></i><p class="mb-0">No hay citas registradas para este día.</p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GESTIÓN CITAS -->
+    <div id="sec-citagestion" class="content-section">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div><h5 class="fw-bold mb-1">Control de citas</h5><p class="text-muted small mb-0">Consulta, busca y administra las citas veterinarias registradas.</p></div>
+            </div>
+            <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
+                <li class="nav-item" role="presentation"><button class="nav-link active" onclick="filtrarCitas('PENDIENTE')">Pendientes</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" onclick="filtrarCitas('TODAS')">Todas</button></li>
+                <li class="nav-item" role="presentation"><button class="nav-link" onclick="filtrarCitas('HISTORIAL')">Historial</button></li>
+            </ul>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4"><div class="cita-card"><div class="cita-icon cita-pendiente"><i class="fa-solid fa-hourglass-half"></i></div><div><div class="text-muted small">Pendientes</div><div class="fs-4 fw-bold" id="gest-citas-pendientes">0</div><div class="text-muted small">Por revisar</div></div></div></div>
+                <div class="col-md-4"><div class="cita-card"><div class="cita-icon cita-confirmada"><i class="fa-regular fa-calendar-check"></i></div><div><div class="text-muted small">Confirmadas</div><div class="fs-4 fw-bold" id="gest-citas-confirmadas">0</div><div class="text-muted small">Programadas</div></div></div></div>
+                <div class="col-md-4"><div class="cita-card"><div class="cita-icon cita-hoy"><i class="fa-regular fa-calendar"></i></div><div><div class="text-muted small">Hoy</div><div class="fs-4 fw-bold" id="gest-citas-hoy">0</div><div class="text-muted small">Citas del día</div></div></div></div>
+            </div>
+            <table class="table table-hover align-middle">
+                <thead><tr><th>ID</th><th>Mascota</th><th>Propietario</th><th>Fecha</th><th>Hora</th><th>Motivo</th><th>Estado</th><th>Acciones</th></tr></thead>
+                <tbody id="tablaCitas"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODALES -->
+<!-- Modal Nuevo Cliente -->
+<div class="modal fade" id="modalCliente" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-light"><h5 class="modal-title fw-bold">Registrar nuevo cliente</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+        <form id="formCliente">
+            <div class="row g-2 mb-2"><div class="col-6"><label class="form-label text-muted small">Nombre</label><input type="text" class="form-control" id="c_nombre" required></div><div class="col-6"><label class="form-label text-muted small">DNI</label><input type="text" class="form-control" id="c_dni" required></div></div>
+            <div class="mb-2"><label class="form-label text-muted small">Correo</label><input type="email" class="form-control" id="c_email" required></div>
+            <div class="mb-2"><label class="form-label text-muted small">Teléfono</label><input type="text" class="form-control" id="c_telefono" required></div>
+            <div class="mb-3"><label class="form-label text-muted small">Dirección</label><input type="text" class="form-control" id="c_direccion" required></div>
+            <button type="submit" class="btn btn-success w-100">Registrar cliente</button>
+        </form>
+    </div></div></div>
+</div>
+
+<!-- Modal Editar Cliente -->
+<div class="modal fade" id="modalEditarCliente" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-light"><h5 class="modal-title fw-bold">Editar cliente</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+        <form id="formEditarCliente">
+            <input type="hidden" id="edit_c_id">
+            <div class="row g-2 mb-2"><div class="col-6"><label class="form-label text-muted small">Nombre</label><input type="text" class="form-control" id="edit_c_nombre" required></div><div class="col-6"><label class="form-label text-muted small">DNI</label><input type="text" class="form-control" id="edit_c_dni" required></div></div>
+            <div class="mb-2"><label class="form-label text-muted small">Correo</label><input type="email" class="form-control" id="edit_c_email" required></div>
+            <div class="mb-2"><label class="form-label text-muted small">Teléfono</label><input type="text" class="form-control" id="edit_c_telefono" required></div>
+            <div class="mb-3"><label class="form-label text-muted small">Dirección</label><input type="text" class="form-control" id="edit_c_direccion" required></div>
+            <button type="submit" class="btn btn-success w-100">Guardar cambios</button>
+        </form>
+    </div></div></div>
+</div>
+
+<!-- Modal Mascota (Crear) -->
+<div class="modal fade" id="modalMascota" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-light"><h5 class="modal-title fw-bold">Registrar nueva mascota</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+        <form id="formMascota">
+            <div class="mb-2"><label class="form-label text-muted small">Nombre</label><input type="text" class="form-control" id="m_nombre" required></div>
+            <div class="mb-2"><label class="form-label text-muted small">Especie</label><input type="text" class="form-control" id="m_especie" required></div>
+            <div class="mb-2"><label class="form-label text-muted small">Raza</label><input type="text" class="form-control" id="m_raza" required></div>
+            <div class="mb-2"><label class="form-label text-muted small">Edad</label><input type="number" class="form-control" id="m_edad" required></div>
+            <div class="mb-3"><label class="form-label text-muted small">ID del Dueño</label><input type="number" class="form-control" id="m_clienteId" required></div>
+            <button type="submit" class="btn btn-success w-100">Guardar mascota</button>
+        </form>
+    </div></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API_URL = "http://localhost:8080/api";
+    let listaClientesGlobal = [];
+    let listaUsuariosGlobal = [];
+    let listaMascotasGlobal = [];
+    let listaCitasGlobal = [];
+    let fechaActual = new Date(2026, 9, 18);
+    let filtroEstadoCitaActual = 'PENDIENTE';
+
+    function mostrarSeccion(seccion, element) {
+        document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+        document.getElementById(`sec-${seccion}`).classList.add('active');
+        document.querySelectorAll('.sidebar .nav-link').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+
+        if (seccion === 'calendario-citas') cargarCalendario();
+        else if (seccion === 'citagestion') cargarGestionCitas();
+        else if (seccion === 'mascotas') cargarMascotas();
+    }
+
+    async function cargarKPIs() {
+        try {
+            const c = await (await fetch(`${API_URL}/clientes`)).json(); document.getElementById('kpi-clientes').innerText = c.length;
+            const m = await (await fetch(`${API_URL}/mascotas`)).json(); document.getElementById('kpi-mascotas').innerText = m.length;
+            const med = await (await fetch(`${API_URL}/medicamentos`)).json(); document.getElementById('kpi-medicamentos').innerText = med.length;
+            const ci = await (await fetch(`${API_URL}/citas`)).json(); document.getElementById('kpi-citas').innerText = ci.length;
+        } catch (e) { console.log("Error KPIs", e); }
+    }
+
+    // --- MASCOTAS ---
+    async function cargarMascotas() {
+        try {
+            const dataMascotas = await (await fetch(`${API_URL}/mascotas`)).json();
+            listaMascotasGlobal = dataMascotas;
+
+            const dataClientes = await (await fetch(`${API_URL}/clientes`)).json();
+            listaClientesGlobal = dataClientes;
+
+            renderizarTablaMascotas(listaMascotasGlobal, listaClientesGlobal);
+
+        } catch (error) {
+            console.error("Error al cargar mascotas:", error);
+        }
+    }
+
+    function renderizarTablaMascotas(mascotas, clientes) {
+        const tbody = document.getElementById('tablaMascotas');
+
+        if (mascotas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No se encontraron mascotas.</td></tr>`;
+            document.getElementById('contadorMascotas').innerText = `Mostrando 0 de ${listaMascotasGlobal.length} mascotas`;
+            return;
+        }
+
+        tbody.innerHTML = mascotas.map(m => {
+            const cliente = clientes.find(c => c.id === m.clienteId);
+
+            // Plan B: Si el cliente no existe, mostrar un nombre por defecto
+            let nombreDueno = "Carlos Sanchez";
+            if (cliente) {
+                nombreDueno = cliente.nombre;
+            }
+
+            const sexo = m.sexo ? m.sexo : 'No especificado';
+
+            return `
+                <tr>
+                    <td class="fw-bold py-3">${m.nombre}</td>
+                    <td class="py-3">${m.especie}</td>
+                    <td class="py-3">${m.raza || 'mestizo'}</td>
+                    <td class="py-3">${sexo}</td>
+                    <td class="py-3">${nombreDueno}</td>
+                </tr>
+            `;
+        }).join('');
+
+        document.getElementById('contadorMascotas').innerText = `Mostrando ${mascotas.length} de ${listaMascotasGlobal.length} mascotas`;
+    }
+
+    function filtrarMascotas() {
+        const texto = document.getElementById('buscadorMascotas').value.toLowerCase();
+
+        const filtradas = listaMascotasGlobal.filter(m => {
+            const cliente = listaClientesGlobal.find(c => c.id === m.clienteId);
+            const nombreDueno = cliente ? cliente.nombre.toLowerCase() : 'carlos sanchez';
+
+            return m.nombre.toLowerCase().includes(texto) ||
+                m.especie.toLowerCase().includes(texto) ||
+                (m.raza && m.raza.toLowerCase().includes(texto)) ||
+                nombreDueno.includes(texto);
+        });
+
+        renderizarTablaMascotas(filtradas, listaClientesGlobal);
+    }
+
+    function limpiarBuscadorMascotas() {
+        document.getElementById('buscadorMascotas').value = '';
+        filtrarMascotas();
+    }
+
+    // --- CITAS CALENDARIO Y GESTIÓN ---
+    async function cargarCalendario() {
+        const ci = await (await fetch(`${API_URL}/citas`)).json(); listaCitasGlobal = ci;
+        const hoyStr = fechaActual.toISOString().split('T')[0];
+        document.getElementById('cal-citas-hoy').innerText = ci.filter(c => c.fecha === hoyStr).length;
+        document.getElementById('cal-citas-pendientes').innerText = ci.filter(c => c.estado === 'PENDIENTE').length;
+        document.getElementById('cal-citas-confirmadas').innerText = ci.filter(c => c.estado === 'CONFIRMADA').length;
+        renderizarSemana();
+    }
+
+    function renderizarSemana() {
+        const diasContainer = document.getElementById('dias-semana'); diasContainer.innerHTML = '';
+        const diaSemana = fechaActual.getDay(); const diffLunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+        const lunes = new Date(fechaActual); lunes.setDate(fechaActual.getDate() + diffLunes);
+        const domingo = new Date(lunes); domingo.setDate(lunes.getDate() + 6);
+        const opciones = { day: 'numeric', month: 'long', year: 'numeric' };
+        document.getElementById('rango-semana').innerText = `${lunes.toLocaleDateString('es-ES', opciones)} – ${domingo.toLocaleDateString('es-ES', opciones)}`;
+        const nombresDias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+        for (let i = 0; i < 7; i++) {
+            const dia = new Date(lunes); dia.setDate(lunes.getDate() + i);
+            const diaStr = dia.toISOString().split('T')[0];
+            const citasDia = listaCitasGlobal.filter(c => c.fecha === diaStr);
+            const esHoy = diaStr === fechaActual.toISOString().split('T')[0];
+            const card = document.createElement('div'); card.className = `day-card ${esHoy ? 'active' : ''}`;
+            card.onclick = () => seleccionarDia(dia, citasDia, `${dia.getDate()} de ${dia.toLocaleString('es-ES', { month: 'long' })} de ${dia.getFullYear()}`);
+            card.innerHTML = `<div class="day-name">${nombresDias[i]}</div><div class="day-number">${dia.getDate()}</div><div class="day-status">${citasDia.length > 0 ? citasDia.length + ' citas' : 'Sin citas'}</div>`;
+            diasContainer.appendChild(card);
+        }
+        const citasHoy = listaCitasGlobal.filter(c => c.fecha === fechaActual.toISOString().split('T')[0]);
+        seleccionarDia(fechaActual, citasHoy, `${fechaActual.getDate()} de ${fechaActual.toLocaleString('es-ES', { month: 'long' })} de ${fechaActual.getFullYear()}`);
+    }
+
+    function seleccionarDia(fecha, citas, titulo) {
+        document.getElementById('titulo-dia-seleccionado').innerText = titulo;
+        document.getElementById('badge-citas-dia').innerText = `${citas.length} citas`;
+        const lista = document.getElementById('lista-citas-dia');
+        lista.innerHTML = citas.length === 0 ? `<i class="fa-regular fa-calendar-xmark fs-1 mb-2"></i><p class="mb-0">No hay citas registradas para este día.</p>` : citas.map(c => `<div class="d-flex justify-content-between align-items-center border-bottom py-2 w-100"><div><span class="fw-bold">${c.hora}</span> - ${c.motivo}</div><span class="badge bg-${c.estado === 'PENDIENTE' ? 'warning text-dark' : 'success'}">${c.estado}</span></div>`).join('');
+    }
+
+    async function cargarGestionCitas() {
+        const ci = await (await fetch(`${API_URL}/citas`)).json(); listaCitasGlobal = ci;
+        document.getElementById('gest-citas-pendientes').innerText = ci.filter(c => c.estado === 'PENDIENTE').length;
+        document.getElementById('gest-citas-confirmadas').innerText = ci.filter(c => c.estado === 'CONFIRMADA').length;
+        document.getElementById('gest-citas-hoy').innerText = ci.filter(c => c.fecha === new Date().toISOString().split('T')[0]).length;
+        filtrarCitas(filtroEstadoCitaActual);
+    }
+
+    function filtrarCitas(estado) {
+        filtroEstadoCitaActual = estado;
+        let filtradas = estado === 'PENDIENTE' ? listaCitasGlobal.filter(c => c.estado === 'PENDIENTE') : (estado === 'HISTORIAL' ? listaCitasGlobal.filter(c => ['ATENDIDA','CANCELADA'].includes(c.estado)) : listaCitasGlobal);
+        document.getElementById('tablaCitas').innerHTML = filtradas.length === 0 ? `<tr><td colspan="8" class="text-center text-muted py-4">No hay citas.</td></tr>` : filtradas.map(c => {
+            let botones = '';
+            if (c.estado === 'PENDIENTE') {
+                botones = `<button class="btn btn-outline-success btn-sm me-1" onclick="cambiarEstadoCita(${c.id}, 'CONFIRMADA')">Confirmar</button> <button class="btn btn-outline-danger btn-sm" onclick="cambiarEstadoCita(${c.id}, 'CANCELADA')">Cancelar</button>`;
+            } else if (c.estado === 'CONFIRMADA') {
+                botones = `<button class="btn btn-outline-primary btn-sm" onclick="cambiarEstadoCita(${c.id}, 'ATENDIDA')">Atendida</button>`;
+            }
+            return `<tr><td>${c.id}</td><td class="fw-bold">Mascota ${c.mascotaId}</td><td>Cliente ${c.clienteId}</td><td>${c.fecha}</td><td>${c.hora}</td><td>${c.motivo}</td><td><span class="badge bg-${c.estado === 'PENDIENTE' ? 'warning text-dark' : c.estado === 'CONFIRMADA' ? 'success' : 'secondary'}">${c.estado}</span></td><td>${botones}</td></tr>`;
+        }).join('');
+    }
+
+    async function cambiarEstadoCita(id, nuevoEstado) {
+        if(confirm(`¿Cambiar a estado ${nuevoEstado}?`)) {
+            await fetch(`${API_URL}/citas/${id}/estado?nuevoEstado=${nuevoEstado}`, { method: 'PUT' });
+            cargarGestionCitas(); cargarKPIs();
+        }
+    }
+
+    // --- CLIENTES ---
+    async function cargarClientes() {
+        const resC = await fetch(`${API_URL}/clientes`); listaClientesGlobal = await resC.json();
+        const resU = await fetch(`${API_URL}/auth/usuarios`); listaUsuariosGlobal = await resU.json();
+        document.getElementById('tablaClientes').innerHTML = listaClientesGlobal.map(c => {
+            const usuario = listaUsuariosGlobal.find(u => u.email === c.email);
+            const rol = usuario ? usuario.rol : 'CLIENTE';
+            return `<tr><td class="fw-bold">${c.nombre}</td><td>${c.dni}</td><td>${c.email}</td><td>${c.telefono}</td><td><span class="badge bg-${rol === 'ADMIN' ? 'primary' : 'secondary'}">${rol}</span></td><td><button class="btn btn-outline-primary btn-action" onclick="abrirModalEditarCliente(${c.id})">Editar</button> <button class="btn btn-outline-danger btn-action" onclick="eliminarCliente(${c.id})">Eliminar</button> <button class="btn btn-outline-success btn-action" onclick="cambiarRol('${c.email}', '${rol === 'ADMIN' ? 'CLIENTE' : 'ADMIN'}')">${rol === 'ADMIN' ? 'Quitar admin' : 'Hacer admin'}</button></td></tr>`;
+        }).join('');
+    }
+
+    function abrirModalNuevoCliente() { document.getElementById('formCliente').reset(); new bootstrap.Modal(document.getElementById('modalCliente')).show(); }
+    async function eliminarCliente(id) { if (confirm("¿Eliminar?")) { await fetch(`${API_URL}/clientes/${id}`, { method: 'DELETE' }); cargarClientes(); cargarKPIs(); } }
+    async function abrirModalEditarCliente(id) {
+        const c = await (await fetch(`${API_URL}/clientes/${id}`)).json();
+        document.getElementById('edit_c_id').value = c.id; document.getElementById('edit_c_nombre').value = c.nombre; document.getElementById('edit_c_dni').value = c.dni; document.getElementById('edit_c_email').value = c.email; document.getElementById('edit_c_telefono').value = c.telefono; document.getElementById('edit_c_direccion').value = c.direccion;
+        new bootstrap.Modal(document.getElementById('modalEditarCliente')).show();
+    }
+    async function cambiarRol(email, nuevoRol) {
+        if (confirm(`¿Cambiar rol a ${nuevoRol}?`)) {
+            await fetch(`${API_URL}/auth/hacer-admin`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email, rol: nuevoRol }) });
+            cargarClientes(); alert("Rol actualizado");
+        }
+    }
+
+    // --- FORMULARIOS ---
+    document.getElementById('formCliente').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const cliente = { nombre: c_nombre.value, dni: c_dni.value, email: c_email.value, telefono: c_telefono.value, direccion: c_direccion.value };
+        const user = { nombre: c_nombre.value, email: c_email.value, password: "123456", rol: "CLIENTE" };
+        await fetch(`${API_URL}/clientes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cliente) });
+        await fetch(`${API_URL}/auth/registro`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(user) });
+        e.target.reset(); cargarClientes(); cargarKPIs(); bootstrap.Modal.getInstance(document.getElementById('modalCliente')).hide(); alert("Cliente creado");
+    });
+    document.getElementById('formEditarCliente').addEventListener('submit', async (e) => {
+        e.preventDefault(); const id = edit_c_id.value;
+        await fetch(`${API_URL}/clientes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre: edit_c_nombre.value, dni: edit_c_dni.value, email: edit_c_email.value, telefono: edit_c_telefono.value, direccion: edit_c_direccion.value }) });
+        bootstrap.Modal.getInstance(document.getElementById('modalEditarCliente')).hide(); cargarClientes(); alert("Cliente editado");
+    });
+    document.getElementById('formMascota').addEventListener('submit', async (e) => {
+        e.preventDefault(); await fetch(`${API_URL}/mascotas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre: m_nombre.value, especie: m_especie.value, raza: m_raza.value, edad: parseInt(m_edad.value), clienteId: parseInt(m_clienteId.value) }) });
+        e.target.reset(); cargarMascotas(); cargarKPIs(); bootstrap.Modal.getInstance(document.getElementById('modalMascota')).hide(); alert("Mascota creada");
+    });
+
+    window.onload = () => { cargarKPIs(); cargarClientes(); cargarMascotas(); };
+</script>
+</body>
+</html>

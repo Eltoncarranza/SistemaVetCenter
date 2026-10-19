@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VetCenter - Mis Pedidos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        /* NAVBAR */
+        .navbar-custom { background-color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 15px 0; }
+        .navbar-brand { font-weight: 800; color: #0f766e; font-size: 24px; display: flex; align-items: center; gap: 10px;}
+        .navbar-brand i { color: #0f766e; font-size: 30px;}
+        .btn-nav { border: 1px solid #e2e8f0; color: #4a5568; border-radius: 8px; padding: 8px 15px; font-weight: 500; font-size: 14px; margin-left: 10px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;}
+        .btn-nav:hover { background-color: #f7fafc; color: #1a202c; }
+
+        /* CONTENIDO */
+        .page-header { padding: 40px 0 20px 0; }
+        .page-title { font-weight: 800; color: #1a202c; font-size: 36px;}
+
+        .pedido-card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 25px; margin-bottom: 25px; }
+        .pedido-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #edf2f7; padding-bottom: 15px; margin-bottom: 20px;}
+        .pedido-total { font-size: 24px; font-weight: 800; color: #0f766e; }
+
+        .badge-estado { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .bg-entregado { background-color: #198754; color: white; }
+        .bg-pagado { background-color: #198754; color: white; }
+        .bg-preparando { background-color: #f59e0b; color: white; }
+
+        /* SEGUIMIENTO (TIMELINE) */
+        .timeline { display: flex; justify-content: space-between; align-items: center; margin: 30px 0; position: relative; }
+        .timeline-step { text-align: center; flex: 1; position: relative; z-index: 2;}
+        .step-icon { width: 40px; height: 40px; border-radius: 50%; background-color: #e2e8f0; color: #a0aec0; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; font-size: 16px; }
+        .step-icon.active { background-color: #0f766e; color: white; }
+        .step-label { font-size: 13px; font-weight: 600; color: #718096; }
+        .step-label.active { color: #0f766e; }
+
+        /* Línea conectora */
+        .timeline::before { content: ''; position: absolute; top: 20px; left: 10%; right: 10%; height: 2px; background-color: #e2e8f0; z-index: 1;}
+
+        .info-extra { font-size: 14px; color: #718096; margin-top: 15px; }
+        .btn-comprobante { background-color: #198754; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-size: 14px;}
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-custom">
+    <div class="container d-flex justify-content-between align-items-center">
+        <a class="navbar-brand" href="#">
+            <i class="fa-solid fa-paw"></i> VetCenter
+        </a>
+        <div class="d-flex align-items-center">
+            <a href="tienda.html" class="btn-nav"><i class="fa-solid fa-store"></i> Volver a tienda</a>
+            <a href="cliente.html" class="btn-nav"><i class="fa-solid fa-user"></i> Mi panel</a>
+        </div>
+    </div>
+</nav>
+
+<!-- CONTENIDO -->
+<div class="container">
+    <div class="page-header">
+        <div class="text-success fw-bold mb-1" style="font-size: 13px; letter-spacing: 1px;">VETCENTER · MIS COMPRAS</div>
+        <h1 class="page-title">Mis pedidos y seguimiento</h1>
+        <p class="text-muted">Consulta tus compras, revisa el estado del pedido y descubre cuándo estarán listas para recoger en VetCenter.</p>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="fw-bold m-0"><i class="fa-solid fa-clipboard-list me-2 text-success"></i> Mis pedidos</h5>
+        <button class="btn btn-outline-secondary btn-sm" onclick="cargarMisPedidos()"><i class="fa-solid fa-rotate-right me-1"></i> Actualizar</button>
+    </div>
+
+    <div id="contenedorPedidos">
+        <div class="text-center text-muted py-5">
+            <i class="fa-solid fa-box-open fs-1 mb-3 text-secondary"></i>
+            <p>Cargando pedidos...</p>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API_URL = "http://localhost:8080/api";
+    const ID_CLIENTE_LOGUEADO = 1; // El cliente actual
+
+    async function cargarMisPedidos() {
+        const contenedor = document.getElementById('contenedorPedidos');
+        try {
+            const res = await fetch(`${API_URL}/pedidos`);
+            const todos = await res.json();
+
+            // Filtramos los pedidos de este cliente
+            const misPedidos = todos.filter(p => p.clienteId === ID_CLIENTE_LOGUEADO).reverse();
+
+            if (misPedidos.length === 0) {
+                contenedor.innerHTML = `<div class="text-center text-muted py-5"><i class="fa-solid fa-box-open fs-1 mb-3"></i><p>No tienes pedidos registrados aún.</p></div>`;
+                return;
+            }
+
+            contenedor.innerHTML = misPedidos.map(p => {
+                // Generar los iconos de seguimiento
+                let pasoRecibido = 'active';
+                let pasoPreparando = '';
+                let pasoListo = '';
+                let pasoEntregado = '';
+                let mensajeExtra = '';
+
+                if (p.estado === 'RECIBIDO') {
+                    mensajeExtra = 'Tu pedido ha sido recibido y está en espera de preparación.';
+                } else if (p.estado === 'PREPARANDO') {
+                    pasoPreparando = 'active';
+                    mensajeExtra = 'Estamos preparando tu pedido.';
+                } else if (p.estado === 'LISTO_RECOJO') {
+                    pasoPreparando = 'active';
+                    pasoListo = 'active';
+                    mensajeExtra = 'Tu pedido está listo para recoger en VetCenter.';
+                } else if (p.estado === 'ENTREGADO') {
+                    pasoPreparando = 'active';
+                    pasoListo = 'active';
+                    pasoEntregado = 'active';
+                    mensajeExtra = 'Tu pedido fue entregado.';
+                }
+
+                return `
+                    <div class="pedido-card">
+                        <div class="pedido-header">
+                            <div>
+                                <h5 class="fw-bold mb-1">Pedido VC-00000${p.id}</h5>
+                                <div class="text-muted small">17 oct. 2026, 1:14 p. m.</div>
+                                <div class="d-flex gap-2 mt-2">
+                                    <span class="badge-estado bg-entregado">Pedido: ${p.estado}</span>
+                                    <span class="badge-estado bg-pagado">Pago: PAGADO</span>
+                                </div>
+                            </div>
+                            <div class="pedido-total">S/ ${p.total.toFixed(2)}</div>
+                        </div>
+
+                        <div class="bg-light rounded-3 p-3">
+                            <h6 class="fw-bold mb-3">Seguimiento de tu pedido</h6>
+                            <div class="timeline">
+                                <div class="timeline-step">
+                                    <div class="step-icon ${pasoRecibido}"><i class="fa-solid fa-check"></i></div>
+                                    <div class="step-label ${pasoRecibido}">Recibido</div>
+                                </div>
+                                <div class="timeline-step">
+                                    <div class="step-icon ${pasoPreparando}"><i class="fa-solid fa-box"></i></div>
+                                    <div class="step-label ${pasoPreparando}">Preparando</div>
+                                </div>
+                                <div class="timeline-step">
+                                    <div class="step-icon ${pasoListo}"><i class="fa-solid fa-bell-concierge"></i></div>
+                                    <div class="step-label ${pasoListo}">Listo para recoger</div>
+                                </div>
+                                <div class="timeline-step">
+                                    <div class="step-icon ${pasoEntregado}"><i class="fa-solid fa-handshake"></i></div>
+                                    <div class="step-label ${pasoEntregado}">Entregado</div>
+                                </div>
+                            </div>
+                            <div class="alert alert-success py-2 mb-0" style="background-color: #ecfdf5; border: none; font-size: 14px;">
+                                <i class="fa-solid fa-quote-left me-2 text-success"></i> ${mensajeExtra}
+                            </div>
+                        </div>
+
+                        <div class="info-extra">
+                            Modalidad de entrega: Recojo en VetCenter. Estado del pago: PAGADO
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3">
+                            <button class="btn btn-outline-secondary btn-sm px-3">Ver detalle</button>
+                            <button class="btn-comprobante"><i class="fa-solid fa-download me-1"></i> Descargar comprobante PDF</button>
+                        </div>
+                    </div>
+                    `;
+            }).join('');
+
+        } catch (error) {
+            console.log("Error cargando pedidos", error);
+            contenedor.innerHTML = `<div class="alert alert-danger">Error al conectar con el servidor. Verifica que Docker esté encendido.</div>`;
+        }
+    }
+
+    window.onload = () => {
+        cargarMisPedidos();
+    };
+</script>
+</body>
+</html>

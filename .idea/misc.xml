@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="MavenProjectsManager">
+    <option name="originalFiles">
+      <list>
+        <option value="$PROJECT_DIR$/CLIENTE-Service/pom.xml" />
+        <option value="$PROJECT_DIR$/MASCOTA-Service/pom.xml" />
+        <option value="$PROJECT_DIR$/MEDICAMENTO-Service/pom.xml" />
+        <option value="$PROJECT_DIR$/CITA-Service/pom.xml" />
+        <option value="$PROJECT_DIR$/PRODUCTO-Service/pom.xml" />
+        <option value="$PROJECT_DIR$/PEDIDO-Service/pom.xml" />
+        <option value="$PROJECT_DIR$/IDENTITY-Service/pom.xml" />
+        <option value="$PROJECT_DIR$/GATEWAY-Service/pom.xml" />
+        <option value="$PROJECT_DIR$/EUREKA-Server/pom.xml" />
+        <option value="$PROJECT_DIR$/NOTIFICATION-Service/pom.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_26" default="true" project-jdk-name="26" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/out" />
+  </component>
+</project>

@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VetCenter - Tienda Virtual</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f7fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-x: hidden; }
+
+        /* SIDEBAR */
+        .sidebar { height: 100vh; width: 260px; position: fixed; background-color: #152534; padding-top: 20px; display: flex; flex-direction: column; color: white; z-index: 1000; }
+        .sidebar .brand { padding: 0 20px; font-size: 24px; font-weight: bold; color: white; text-decoration: none; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+        .sidebar .brand i { color: #20c997; }
+        .sidebar .brand span { font-size: 12px; color: #a0aec0; display: block; font-weight: normal; margin-top: -5px;}
+        .sidebar .menu-label { font-size: 11px; color: #718096; padding-left: 20px; margin-bottom: 10px; letter-spacing: 1px; font-weight: bold; }
+        .sidebar a.nav-link { color: #cbd5e0; padding: 12px 20px; margin: 4px 10px; border-radius: 8px; display: flex; align-items: center; gap: 15px; font-size: 15px; transition: 0.3s; text-decoration: none;}
+        .sidebar a.nav-link:hover, .sidebar a.nav-link.active { background-color: #1f3b52; color: white; }
+        .sidebar a.nav-link.active { border-left: 4px solid #20c997; }
+        .sidebar .logout-btn { margin-top: auto; padding: 20px; }
+        .sidebar .logout-btn a { color: #fc8181; text-decoration: none; display: flex; align-items: center; gap: 10px; border: 1px solid #4a5568; padding: 10px; border-radius: 8px; justify-content: center; }
+        .sidebar .logout-btn a:hover { background-color: #e53e3e; color: white; border-color: #e53e3e; }
+
+        /* MAIN CONTENT */
+        .main-content { margin-left: 260px; padding: 30px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .header-top h2 { font-weight: 800; margin: 0; color: #1a202c; }
+        .header-top p { color: #718096; margin: 0; font-size: 14px; }
+        .admin-avatar { width: 45px; height: 45px; background-color: #e6fffa; color: #198754; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+        /* TARJETAS KPI */
+        .kpi-card { background: white; border-radius: 16px; padding: 24px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: 100%; }
+        .kpi-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;}
+        .kpi-title { font-size: 16px; color: #4a5568; font-weight: 500;}
+        .kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; background-color: #ccfbf1; color: #0d9488;}
+        .kpi-value { font-size: 36px; font-weight: 800; color: #0f766e; margin-bottom: 5px; }
+        .kpi-desc { font-size: 14px; color: #718096; }
+
+        /* SECCIONES Y TABLAS */
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .card { border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; background: white;}
+        .table th { color: #718096; font-weight: 600; font-size: 13px; border-bottom: 2px solid #edf2f7; text-transform: uppercase; letter-spacing: 0.5px;}
+        .table td { vertical-align: middle; font-size: 14px; color: #2d3748; }
+        .table-hover tbody tr:hover { background-color: #f7fafc; }
+        .badge-activo { background-color: #198754; color: white; padding: 5px 10px; border-radius: 6px; font-size: 12px;}
+        .badge-inactivo { background-color: #6c757d; color: white; padding: 5px 10px; border-radius: 6px; font-size: 12px;}
+        .btn-action { font-size: 12px; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; }
+
+        .product-img { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; }
+
+        /* ESTILOS DEL MODAL */
+        .modal-content { border-radius: 15px; border: none; }
+        .modal-header { border-bottom: none; padding-bottom: 0; }
+        .modal-body { padding: 30px; }
+        .modal-footer { border-top: none; padding-top: 0; padding-bottom: 30px; justify-content: flex-end; gap: 10px;}
+        .form-control, .form-select { background-color: #f8f9fa; border: 1px solid #e2e8f0; padding: 10px 15px; }
+        .form-control:focus, .form-select:focus { background-color: white; border-color: #198754; box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.1); }
+        .form-label { font-weight: 500; color: #4a5568; font-size: 14px;}
+
+        /* TOAST */
+        .toast-message { position: fixed; top: 20px; right: 20px; z-index: 9999; background: #d1e7dd; color: #0f5132; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; font-weight: 500; transition: opacity 0.3s; }
+
+        /* ESTILOS PESTAÑAS CATEGORÍAS */
+        .nav-pills .nav-link.active { background-color: #0f766e; color: white; border-radius: 8px; }
+        .nav-pills .nav-link { color: #4a5568; font-weight: 500; border: 1px solid #e2e8f0; margin-right: 10px; border-radius: 8px; padding: 10px 20px;}
+
+        /* ESTILOS PEDIDOS */
+        .badge-estado { padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .estado-recibido { background-color: #e2e8f0; color: #4a5568; }
+        .estado-preparando { background-color: #fef3c7; color: #d97706; }
+        .estado-listo { background-color: #dbeafe; color: #2563eb; }
+        .estado-entregado { background-color: #d1fae5; color: #059669; }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <a href="#" class="brand">
+        <i class="fa-solid fa-paw"></i>
+        <div>VetCenter<span>Tienda virtual</span></div>
+    </a>
+
+    <a href="index.html" class="nav-link"><i class="fa-solid fa-arrow-left"></i> Panel principal</a>
+
+    <div class="menu-label mt-4">TIENDA</div>
+    <a href="#" class="nav-link active" onclick="mostrarSeccion('resumen', this)"><i class="fa-solid fa-border-all"></i> Resumen</a>
+    <a href="#" class="nav-link" onclick="mostrarSeccion('productos', this)"><i class="fa-solid fa-box"></i> Productos</a>
+    <a href="#" class="nav-link" onclick="mostrarSeccion('medicamentos', this)"><i class="fa-solid fa-pills"></i> Medicamentos</a>
+    <a href="#" class="nav-link" onclick="mostrarSeccion('categorias', this)"><i class="fa-solid fa-tags"></i> Categorías</a>
+    <a href="#" class="nav-link" onclick="mostrarSeccion('pedidos', this)"><i class="fa-solid fa-boxes-stacked"></i> Pedidos</a>
+
+    <div class="logout-btn">
+        <a href="login.html"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión</a>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+    <div class="header-top">
+        <div>
+            <p><i class="fa-solid fa-house me-1"></i> VetCenter / Administración / Tienda</p>
+            <h2>Administración de la tienda</h2>
+            <p>Gestiona el catálogo, las categorías y el inventario.</p>
+        </div>
+        <div class="admin-avatar"><i class="fa-solid fa-store"></i></div>
+    </div>
+
+    <!-- ================== RESUMEN ================== -->
+    <div id="sec-resumen" class="content-section active">
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div class="kpi-title">Productos registrados</div>
+                        <div class="kpi-icon"><i class="fa-solid fa-box"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpi-prod-total">0</div>
+                    <div class="kpi-desc">Total del catálogo</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div class="kpi-title">Productos activos</div>
+                        <div class="kpi-icon"><i class="fa-solid fa-check"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpi-prod-activos">0</div>
+                    <div class="kpi-desc">Disponibles en tienda</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div class="kpi-title">Stock bajo</div>
+                        <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpi-prod-stock">0</div>
+                    <div class="kpi-desc">10 unidades o menos</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div class="kpi-title">Categorías</div>
+                        <div class="kpi-icon"><i class="fa-solid fa-tags"></i></div>
+                    </div>
+                    <div class="kpi-value" id="kpi-categorias">0</div>
+                    <div class="kpi-desc">Categorías registradas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================== PRODUCTOS ================== -->
+    <div id="sec-productos" class="content-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold m-0"><i class="fa-solid fa-box text-success me-2"></i> Gestión de productos</h4>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalNuevoProducto"><i class="fa-solid fa-plus me-2"></i> Nuevo producto</button>
+        </div>
+
+        <div class="card p-3 mb-3">
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label text-muted small">Buscar producto</label>
+                    <input type="text" class="form-control" id="buscadorProductos" onkeyup="filtrarProductos()" placeholder="Nombre o descripción">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-muted small">Categoría</label>
+                    <select class="form-select" id="filtroCategoria" onchange="filtrarProductos()">
+                        <option value="">Todas</option>
+                        <!-- Se llena dinámicamente -->
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted small">Estado</label>
+                    <select class="form-select" id="filtroEstado" onchange="filtrarProductos()">
+                        <option value="">Todos</option>
+                        <option value="true">Activos</option>
+                        <option value="false">Inactivos</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-4">
+            <table class="table table-hover align-middle">
+                <thead>
+                <tr>
+                    <th>Imagen</th>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody id="tablaProductos"></tbody>
+            </table>
+            <div class="text-muted small mt-3" id="contadorProductos">Mostrando 0 productos</div>
+        </div>
+    </div>
+
+    <!-- ================== MEDICAMENTOS ================== -->
+    <div id="sec-medicamentos" class="content-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold m-0"><i class="fa-solid fa-pills text-success me-2"></i> Gestión de medicamentos</h4>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalNuevoMedicamento"><i class="fa-solid fa-plus me-2"></i> Nuevo medicamento</button>
+        </div>
+
+        <div class="card p-4">
+            <h5 class="fw-bold mb-1">Inventario de medicamentos</h5>
+            <p class="text-muted small mb-4">Consulta los medicamentos registrados, sus existencias y precios.</p>
+
+            <table class="table table-hover align-middle">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Imagen</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Presentación</th>
+                    <th>Stock</th>
+                    <th>Precio</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody id="tablaMedicamentos"></tbody>
+            </table>
+            <div class="text-muted small mt-3" id="contadorMedicamentos">Mostrando 0 medicamentos</div>
+        </div>
+    </div>
+
+    <!-- ================== CATEGORÍAS ================== -->
+    <div id="sec-categorias" class="content-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold m-0"><i class="fa-solid fa-tags text-success me-2"></i> Gestión de categorías</h4>
+            <button class="btn btn-success" onclick="abrirModalNuevaCategoria()"><i class="fa-solid fa-plus me-2"></i> Nueva categoría</button>
+        </div>
+
+        <div class="card p-4">
+            <!-- Pestañas -->
+            <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="pills-productos-tab" data-bs-toggle="pill" data-bs-target="#pills-productos" type="button" role="tab" onclick="actualizarTipoCategoria('producto')"><i class="fa-solid fa-box me-2"></i> Productos</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pills-medicamentos-tab" data-bs-toggle="pill" data-bs-target="#pills-medicamentos" type="button" role="tab" onclick="actualizarTipoCategoria('medicamento')"><i class="fa-solid fa-pills me-2"></i> Medicamentos</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="pills-tabContent">
+                <!-- Tabla Categorías de Productos -->
+                <div class="tab-pane fade show active" id="pills-productos" role="tabpanel">
+                    <h6 class="fw-bold mb-1">Categorías de productos</h6>
+                    <p class="text-muted small mb-3">Administra las categorías de productos de VetCenter.</p>
+                    <table class="table table-hover">
+                        <thead><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Acciones</th></tr></thead>
+                        <tbody id="tablaCatProductos"></tbody>
+                    </table>
+                </div>
+                <!-- Tabla Categorías de Medicamentos -->
+                <div class="tab-pane fade" id="pills-medicamentos" role="tabpanel">
+                    <h6 class="fw-bold mb-1">Categorías de medicamentos</h6>
+                    <p class="text-muted small mb-3">Administra las categorías de medicamentos de VetCenter.</p>
+                    <table class="table table-hover">
+                        <thead><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Acciones</th></tr></thead>
+                        <tbody id="tablaCatMedicamentos"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================== PEDIDOS ================== -->
+    <div id="sec-pedidos" class="content-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold m-0"><i class="fa-solid fa-boxes-stacked text-success me-2"></i> Gestión de pedidos</h4>
+            <button class="btn btn-success" onclick="cargarPedidos()"><i class="fa-solid fa-rotate-right me-2"></i> Actualizar pedidos</button>
+        </div>
+
+        <!-- Tarjetas resumen de pedidos -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="kpi-card" style="background-color: #f8fafc;">
+                    <div class="kpi-title">Pedidos registrados</div>
+                    <div class="kpi-value" id="kpi-total-pedidos">0</div>
+                    <div class="kpi-desc">Total de pedidos</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="kpi-card" style="background-color: #f8fafc;">
+                    <div class="kpi-title">Importe registrado</div>
+                    <div class="kpi-value text-success" id="kpi-total-importe">S/ 0.00</div>
+                    <div class="kpi-desc">No representa pagos recibidos</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="kpi-card" style="background-color: #f8fafc;">
+                    <div class="kpi-title">Pedidos confirmados</div>
+                    <div class="kpi-value" id="kpi-total-confirmados">0</div>
+                    <div class="kpi-desc">Estado de los pedidos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="card p-3 mb-3">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label text-muted small">Buscar pedido</label>
+                    <input type="text" class="form-control" id="buscadorPedidos" placeholder="Busca por nombre o DNI">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-muted small">Estado del pedido</label>
+                    <select class="form-select" id="filtroEstadoPedido">
+                        <option value="">Todos</option>
+                        <option value="RECIBIDO">Recibido</option>
+                        <option value="PREPARANDO">Preparando</option>
+                        <option value="LISTO_RECOJO">Listo para recoger</option>
+                        <option value="ENTREGADO">Entregado</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-muted small">Fecha del pedido</label>
+                    <input type="date" class="form-control" id="filtroFechaPedido">
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de pedidos -->
+        <div class="card p-4">
+            <table class="table table-hover align-middle">
+                <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Cliente</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Pago</th>
+                    <th>Acciones</th>
+                </tr>
+                </thead>
+                <tbody id="tablaPedidos"></tbody>
+            </table>
+            <div class="text-muted small mt-3" id="contadorPedidos">Mostrando 0 pedidos</div>
+        </div>
+    </div>
+</div>
+
+<!-- ================== MODALES ================== -->
+
+<!-- Modal Nueva Categoría -->
+<div class="modal fade" id="modalNuevaCategoria" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="tituloNuevaCategoria">Nueva categoría de producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formNuevaCategoria">
+                <div class="modal-body">
+                    <input type="hidden" id="cat_tipo" value="producto">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de la categoría</label>
+                        <input type="text" class="form-control" id="cat_nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" id="cat_descripcion" rows="2" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-check-circle me-1"></i> Guardar categoría</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Categoría -->
+<div class="modal fade" id="modalEditarCategoria" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="tituloEditarCategoria">Editar categoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditarCategoria">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_cat_id">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de la categoría</label>
+                        <input type="text" class="form-control" id="edit_cat_nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" id="edit_cat_descripcion" rows="2" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-check-circle me-1"></i> Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmar Estado Pedido (Preparar / Entregar) -->
+<div class="modal fade" id="modalEstadoPedido" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="tituloModalEstado">Confirmar preparación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <i class="fa-solid fa-box-open fs-1 text-warning"></i>
+                </div>
+                <h5 id="mensajeModalEstado">¿Deseas comenzar la preparación del pedido #2?</h5>
+                <div class="alert alert-info mt-3 mb-0" style="font-size: 13px;">
+                    <i class="fa-solid fa-circle-info me-1"></i> El pedido cambiará al estado <strong id="nuevoEstadoModal"></strong>.
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center border-top-0">
+                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnConfirmarEstado">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Producto -->
+<div class="modal fade" id="modalNuevoProducto" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Nuevo producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formNuevoProducto">
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Nombre del producto</label>
+                            <input type="text" class="form-control" id="np_nombre" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Categoría</label>
+                            <select class="form-select" id="np_categoria" required>
+                                <option value="">Seleccionar</option>
+                                <!-- Se llenan dinámicamente -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" id="np_descripcion" rows="3" required></textarea>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Precio (S/)</label>
+                            <input type="number" step="0.01" class="form-control" id="np_precio" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Stock</label>
+                            <input type="number" class="form-control" id="np_stock" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">URL de imagen</label>
+                        <input type="url" class="form-control" id="np_imagen" placeholder="https://ejemplo.com/producto.jpg">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-check-circle me-1"></i> Guardar producto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Producto -->
+<div class="modal fade" id="modalEditarProducto" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Editar producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditarProducto">
+                <div class="modal-body">
+                    <input type="hidden" id="ep_id">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Nombre del producto</label>
+                            <input type="text" class="form-control" id="ep_nombre" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Categoría</label>
+                            <select class="form-select" id="ep_categoria" required>
+                                <!-- Se llenan dinámicamente -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" id="ep_descripcion" rows="3" required></textarea>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Precio (S/)</label>
+                            <input type="number" step="0.01" class="form-control" id="ep_precio" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Stock</label>
+                            <input type="number" class="form-control" id="ep_stock" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">URL de imagen</label>
+                        <input type="url" class="form-control" id="ep_imagen">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Estado</label>
+                        <select class="form-select" id="ep_estado">
+                            <option value="true">Activo</option>
+                            <option value="false">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-check-circle me-1"></i> Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Medicamento -->
+<div class="modal fade" id="modalNuevoMedicamento" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Nuevo medicamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formNuevoMedicamento">
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Nombre del medicamento</label>
+                            <input type="text" class="form-control" id="nm_nombre" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Presentación</label>
+                            <input type="text" class="form-control" id="nm_presentacion" placeholder="Ej. Tabletas, jarabe" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" id="nm_descripcion" rows="3" required></textarea>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Precio (S/)</label>
+                            <input type="number" step="0.01" class="form-control" id="nm_precio" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Stock</label>
+                            <input type="number" class="form-control" id="nm_stock" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Categoría</label>
+                            <select class="form-select" id="nm_categoria">
+                                <!-- Se llenan dinámicamente -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" id="nm_estado">
+                                <option value="true">Activo</option>
+                                <option value="false">Inactivo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">URL de imagen</label>
+                        <input type="url" class="form-control" id="nm_imagen" placeholder="https://ejemplo.com/medicamento.jpg">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-check-circle me-1"></i> Guardar medicamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Medicamento -->
+<div class="modal fade" id="modalEditarMedicamento" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Editar medicamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditarMedicamento">
+                <div class="modal-body">
+                    <input type="hidden" id="em_id">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Nombre del medicamento</label>
+                            <input type="text" class="form-control" id="em_nombre" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Presentación</label>
+                            <input type="text" class="form-control" id="em_presentacion" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" id="em_descripcion" rows="3" required></textarea>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Precio (S/)</label>
+                            <input type="number" step="0.01" class="form-control" id="em_precio" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Stock</label>
+                            <input type="number" class="form-control" id="em_stock" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Categoría</label>
+                            <select class="form-select" id="em_categoria">
+                                <!-- Se llenan dinámicamente -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" id="em_estado">
+                                <option value="true">Activo</option>
+                                <option value="false">Inactivo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">URL de imagen</label>
+                        <input type="url" class="form-control" id="em_imagen">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-check-circle me-1"></i> Actualizar medicamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API_URL = "http://localhost:8080/api";
+    let listaProductosGlobal = [];
+    let listaMedicamentosGlobal = [];
+    let listaPedidosGlobal = [];
+
+    // Categorías locales
+    let categoriasProductosLocales = [
+        { id: 1, nombre: "Alimentos", descripcion: "Comida y snacks para mascotas" },
+        { id: 2, nombre: "Juguetes", descripcion: "Juguetes interactivos y mordedores" },
+        { id: 3, nombre: "Higiene", descripcion: "Productos de limpieza" }
+    ];
+
+    let categoriasMedicamentosLocales = [
+        { id: 1, nombre: "Antiparasitarios", descripcion: "Medicamentos contra parásitos" },
+        { id: 2, nombre: "Antibióticos", descripcion: "Medicamentos antibacterianos" },
+        { id: 3, nombre: "Antiinflamatorios", descripcion: "Tratamientos antiinflamatorios" },
+        { id: 4, nombre: "Suplementos", descripcion: "Vitaminas y suplementos veterinarios" },
+        { id: 5, nombre: "Cuidado dermatológico", descripcion: "Tratamientos para piel y pelaje" },
+        { id: 6, nombre: "Otros", descripcion: "Otros medicamentos veterinarios" }
+    ];
+
+    let tipoCategoriaActual = 'producto';
+    let pedidoSeleccionadoId = null;
+    let nuevoEstadoPedido = "";
+
+    function mostrarSeccion(seccion, element) {
+        document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+        document.getElementById(`sec-${seccion}`).classList.add('active');
+        document.querySelectorAll('.sidebar .nav-link').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+
+        if (seccion === 'pedidos') {
+            cargarPedidos();
+        }
+    }
+
+    function actualizarTipoCategoria(tipo) {
+        tipoCategoriaActual = tipo;
+        document.getElementById('cat_tipo').value = tipo;
+        const titulo = document.getElementById('tituloNuevaCategoria');
+        titulo.innerText = tipo === 'producto' ? 'Nueva categoría de producto' : 'Nueva categoría de medicamento';
+    }
+
+    function mostrarToast(mensaje) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-message';
+        toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${mensaje}`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // ================== CARGAR PEDIDOS ==================
+    async function cargarPedidos() {
+        try {
+            const ped = await (await fetch(`${API_URL}/pedidos`)).json();
+            listaPedidosGlobal = ped;
+
+            // Calcular KPIs de pedidos
+            document.getElementById('kpi-total-pedidos').innerText = ped.length;
+            let total = ped.reduce((sum, p) => sum + p.total, 0);
+            document.getElementById('kpi-total-importe').innerText = `S/ ${total.toFixed(2)}`;
+
+            let confirmados = ped.filter(p => p.estado !== 'RECIBIDO').length;
+            document.getElementById('kpi-total-confirmados').innerText = confirmados;
+
+            renderizarTablaPedidos(ped);
+        } catch (e) { console.log(e); }
+    }
+
+    function renderizarTablaPedidos(pedidos) {
+        document.getElementById('tablaPedidos').innerHTML = pedidos.map(p => {
+            let badgeClase = "";
+            let botonAccion = "";
+
+            switch(p.estado) {
+                case 'RECIBIDO':
+                    badgeClase = "estado-recibido";
+                    botonAccion = `<button class="btn btn-success btn-sm" onclick="abrirModalEstadoPedido(${p.id}, 'PREPARANDO')">Preparar</button>`;
+                    break;
+                case 'PREPARANDO':
+                    badgeClase = "estado-preparando";
+                    botonAccion = `<button class="btn btn-info btn-sm text-white" onclick="abrirModalEstadoPedido(${p.id}, 'LISTO_RECOJO')">Listo para recoger</button>`;
+                    break;
+                case 'LISTO_RECOJO':
+                    badgeClase = "estado-listo";
+                    botonAccion = `<button class="btn btn-success btn-sm" onclick="abrirModalEstadoPedido(${p.id}, 'ENTREGADO')">Entregar</button>`;
+                    break;
+                case 'ENTREGADO':
+                    badgeClase = "estado-entregado";
+                    botonAccion = ``; // Sin acción
+                    break;
+            }
+
+            return `
+                <tr>
+                    <td>#${p.id}</td>
+                    <td>
+                        <div class="fw-bold">Cliente ${p.clienteId}</div>
+                        <div class="text-muted small">DNI: 12345678</div>
+                    </td>
+                    <td>${new Date().toLocaleDateString()}</td>
+                    <td>S/ ${p.total}</td>
+                    <td><span class="badge-estado ${badgeClase}">${p.estado}</span></td>
+                    <td>PAGADO</td>
+                    <td>
+                        <button class="btn btn-outline-secondary btn-sm">Ver detalle</button>
+                        ${botonAccion}
+                    </td>
+                </tr>
+                `;
+        }).join('');
+        document.getElementById('contadorPedidos').innerText = `${pedidos.length} pedido(s) encontrados`;
+    }
+
+    function abrirModalEstadoPedido(id, nuevoEstado) {
+        pedidoSeleccionadoId = id;
+        nuevoEstadoPedido = nuevoEstado;
+
+        let titulo = "";
+        let mensaje = "";
+        let textoBoton = "";
+
+        if (nuevoEstado === 'PREPARANDO') {
+            titulo = "Preparar pedido";
+            mensaje = `¿Deseas comenzar la preparación del pedido #${id}?`;
+            textoBoton = "Confirmar preparación";
+        } else if (nuevoEstado === 'LISTO_RECOJO') {
+            titulo = "Pedido listo para recoger";
+            mensaje = `¿Deseas marcar el pedido #${id} como listo para recoger?`;
+            textoBoton = "Confirmar pedido listo";
+        } else if (nuevoEstado === 'ENTREGADO') {
+            titulo = "Confirmar entrega";
+            mensaje = `¿Deseas confirmar la entrega del pedido #${id}?`;
+            textoBoton = "Confirmar entrega";
+        }
+
+        document.getElementById('tituloModalEstado').innerText = titulo;
+        document.getElementById('mensajeModalEstado').innerText = mensaje;
+        document.getElementById('nuevoEstadoModal').innerText = nuevoEstado;
+        document.getElementById('btnConfirmarEstado').innerText = textoBoton;
+
+        new bootstrap.Modal(document.getElementById('modalEstadoPedido')).show();
+    }
+
+    document.getElementById('btnConfirmarEstado').addEventListener('click', async () => {
+        try {
+            // Nota: Necesitas un endpoint PUT /api/pedidos/{id}/estado en el backend
+            alert(`Simulación: El pedido #${pedidoSeleccionadoId} cambiaría a ${nuevoEstadoPedido}`);
+
+            // Cuando tengas el endpoint, descomenta esto:
+            // await fetch(`${API_URL}/pedidos/${pedidoSeleccionadoId}/estado?nuevoEstado=${nuevoEstadoPedido}`, { method: 'PUT' });
+
+            bootstrap.Modal.getInstance(document.getElementById('modalEstadoPedido')).hide();
+            // cargarPedidos();
+            // mostrarToast("Estado del pedido actualizado correctamente");
+        } catch (e) { console.log(e); }
+    });
+
+    // ================== CARGAR PRODUCTOS ==================
+    async function cargarResumen() {
+        try {
+            const prod = await (await fetch(`${API_URL}/productos`)).json();
+            listaProductosGlobal = prod;
+
+            document.getElementById('kpi-prod-total').innerText = prod.length;
+            const activos = prod.filter(p => p.activo !== false).length;
+            document.getElementById('kpi-prod-activos').innerText = activos;
+            const bajoStock = prod.filter(p => p.stock <= 10).length;
+            document.getElementById('kpi-prod-stock').innerText = bajoStock;
+            const categorias = [...new Set(prod.map(p => p.categoria))];
+            document.getElementById('kpi-categorias').innerText = categorias.length;
+
+            filtrarProductos();
+            renderizarCategorias();
+            llenarSelectsCategorias();
+        } catch (e) { console.log("Error en resumen", e); }
+    }
+
+    function renderizarTablaProductos(productos) {
+        document.getElementById('tablaProductos').innerHTML = productos.map(p => {
+            const imgUrl = p.imagenUrl ? p.imagenUrl : 'https://via.placeholder.com/50?text=Sin+Foto';
+            const esActivo = p.activo !== false;
+
+            const badgeEstado = esActivo ? `<span class="badge-activo">Activo</span>` : `<span class="badge-inactivo">Inactivo</span>`;
+            const botonAccion = esActivo ? `<button class="btn btn-outline-danger btn-action" onclick="cambiarEstadoProducto(${p.id})"><i class="fa-solid fa-trash"></i> Desactivar</button>` : ``;
+
+            return `
+                <tr>
+                    <td><img src="${imgUrl}" class="product-img" alt="${p.nombre}"></td>
+                    <td><div class="fw-bold">${p.nombre}</div><div class="text-muted small">${p.descripcion}</div></td>
+                    <td>${p.categoria}</td>
+                    <td>S/ ${p.precio}</td>
+                    <td>${p.stock} unidades</td>
+                    <td>${badgeEstado}</td>
+                    <td>
+                        <button class="btn btn-outline-primary btn-action" onclick="abrirModalEditarProducto(${p.id})"><i class="fa-solid fa-pen"></i> Editar</button>
+                        ${botonAccion}
+                    </td>
+                </tr>
+                `;
+        }).join('');
+        document.getElementById('contadorProductos').innerText = `Mostrando ${productos.length} de ${listaProductosGlobal.length} productos`;
+    }
+
+    function filtrarProductos() {
+        const texto = document.getElementById('buscadorProductos').value.toLowerCase();
+        const cat = document.getElementById('filtroCategoria').value;
+        const est = document.getElementById('filtroEstado').value;
+
+        const filtrados = listaProductosGlobal.filter(p => {
+            const esActivo = p.activo !== false;
+            const matchesTexto = p.nombre.toLowerCase().includes(texto) || p.descripcion.toLowerCase().includes(texto);
+            const matchesCat = cat ? p.categoria === cat : true;
+            const matchesEst = est === "" ? true : String(esActivo) === est;
+            return matchesTexto && matchesCat && matchesEst;
+        });
+        renderizarTablaProductos(filtrados);
+    }
+
+    // ================== CARGAR MEDICAMENTOS ==================
+    async function cargarMedicamentos() {
+        try {
+            const med = await (await fetch(`${API_URL}/medicamentos`)).json();
+            listaMedicamentosGlobal = med;
+
+            document.getElementById('tablaMedicamentos').innerHTML = med.map(m => {
+                const imgUrl = m.imagenUrl ? m.imagenUrl : 'https://via.placeholder.com/50?text=Sin+Foto';
+                const esActivo = m.activo !== false;
+                const badgeEstado = esActivo ? `<span class="badge-activo">Activo</span>` : `<span class="badge-inactivo">Inactivo</span>`;
+
+                return `
+                    <tr>
+                        <td>${m.id}</td>
+                        <td><img src="${imgUrl}" class="product-img" alt="${m.nombre}"></td>
+                        <td class="fw-bold">${m.nombre}</td>
+                        <td>${m.descripcion}</td>
+                        <td>${m.presentacion}</td>
+                        <td>${m.stock}</td>
+                        <td>S/ ${m.precio}</td>
+                        <td>${badgeEstado}</td>
+                        <td>
+                            <button class="btn btn-outline-primary btn-action" onclick="abrirModalEditarMedicamento(${m.id})"><i class="fa-solid fa-pen"></i> Editar</button>
+                            <button class="btn btn-outline-danger btn-action" onclick="eliminarMedicamento(${m.id})"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                        </td>
+                    </tr>
+                    `;
+            }).join('');
+            document.getElementById('contadorMedicamentos').innerText = `${med.length} medicamento(s) registrado(s).`;
+            llenarSelectsCategorias();
+        } catch (e) { console.log(e); }
+    }
+
+    // ================== CATEGORÍAS (VISUAL CON CRUD) ==================
+    function renderizarCategorias() {
+        document.getElementById('tablaCatProductos').innerHTML = categoriasProductosLocales.map(c => `
+                <tr>
+                    <td>${c.id}</td>
+                    <td class="fw-bold">${c.nombre}</td>
+                    <td>${c.descripcion}</td>
+                    <td>
+                        <button class="btn btn-outline-primary btn-action" onclick="abrirModalEditarCategoria(${c.id}, 'producto')"><i class="fa-solid fa-pen"></i> Editar</button>
+                        <button class="btn btn-outline-danger btn-action" onclick="eliminarCategoria(${c.id}, 'producto')"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+
+        document.getElementById('tablaCatMedicamentos').innerHTML = categoriasMedicamentosLocales.map(c => `
+                <tr>
+                    <td>${c.id}</td>
+                    <td class="fw-bold">${c.nombre}</td>
+                    <td>${c.descripcion}</td>
+                    <td>
+                        <button class="btn btn-outline-primary btn-action" onclick="abrirModalEditarCategoria(${c.id}, 'medicamento')"><i class="fa-solid fa-pen"></i> Editar</button>
+                        <button class="btn btn-outline-danger btn-action" onclick="eliminarCategoria(${c.id}, 'medicamento')"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+
+        llenarSelectsCategorias();
+    }
+
+    function llenarSelectsCategorias() {
+        const filtroProd = document.getElementById('filtroCategoria');
+        filtroProd.innerHTML = '<option value="">Todas</option>' +
+            categoriasProductosLocales.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+
+        const selectNuevoProd = document.getElementById('np_categoria');
+        selectNuevoProd.innerHTML = '<option value="">Seleccionar</option>' +
+            categoriasProductosLocales.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+
+        const selectEditProd = document.getElementById('ep_categoria');
+        selectEditProd.innerHTML = categoriasProductosLocales.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+
+        const selectNuevoMed = document.getElementById('nm_categoria');
+        selectNuevoMed.innerHTML = '<option value="Sin categoría">Sin categoría</option>' +
+            categoriasMedicamentosLocales.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+
+        const selectEditMed = document.getElementById('em_categoria');
+        selectEditMed.innerHTML = categoriasMedicamentosLocales.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+    }
+
+    function abrirModalNuevaCategoria() {
+        document.getElementById('formNuevaCategoria').reset();
+        document.getElementById('cat_tipo').value = tipoCategoriaActual;
+        const titulo = document.getElementById('tituloNuevaCategoria');
+        titulo.innerText = tipoCategoriaActual === 'producto' ? 'Nueva categoría de producto' : 'Nueva categoría de medicamento';
+
+        new bootstrap.Modal(document.getElementById('modalNuevaCategoria')).show();
+    }
+
+    function abrirModalEditarCategoria(id, tipo) {
+        const lista = tipo === 'producto' ? categoriasProductosLocales : categoriasMedicamentosLocales;
+        const categoria = lista.find(c => c.id === id);
+
+        if (categoria) {
+            document.getElementById('edit_cat_id').value = categoria.id;
+            document.getElementById('edit_cat_nombre').value = categoria.nombre;
+            document.getElementById('edit_cat_descripcion').value = categoria.descripcion;
+            document.getElementById('tituloEditarCategoria').innerText = `Editar categoría de ${tipo}s`;
+
+            document.getElementById('formEditarCategoria').setAttribute('data-tipo', tipo);
+
+            new bootstrap.Modal(document.getElementById('modalEditarCategoria')).show();
+        }
+    }
+
+    function eliminarCategoria(id, tipo) {
+        if(confirm("¿Estás seguro de que deseas eliminar esta categoría?")) {
+            if (tipo === 'producto') {
+                categoriasProductosLocales = categoriasProductosLocales.filter(c => c.id !== id);
+            } else {
+                categoriasMedicamentosLocales = categoriasMedicamentosLocales.filter(c => c.id !== id);
+            }
+            renderizarCategorias();
+            mostrarToast("Categoría eliminada correctamente");
+        }
+    }
+
+    // ================== CRUD PRODUCTOS ==================
+    document.getElementById('formNuevoProducto').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+            nombre: document.getElementById('np_nombre').value,
+            categoria: document.getElementById('np_categoria').value,
+            descripcion: document.getElementById('np_descripcion').value,
+            precio: parseFloat(document.getElementById('np_precio').value),
+            stock: parseInt(document.getElementById('np_stock').value),
+            activo: true
+        };
+        await fetch(`${API_URL}/productos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        bootstrap.Modal.getInstance(document.getElementById('modalNuevoProducto')).hide();
+        e.target.reset(); cargarResumen(); mostrarToast("Producto creado");
+    });
+
+    async function abrirModalEditarProducto(id) {
+        const res = await fetch(`${API_URL}/productos/${id}`);
+        const p = await res.json();
+        document.getElementById('ep_id').value = p.id;
+        document.getElementById('ep_nombre').value = p.nombre;
+        document.getElementById('ep_categoria').value = p.categoria;
+        document.getElementById('ep_descripcion').value = p.descripcion;
+        document.getElementById('ep_precio').value = p.precio;
+        document.getElementById('ep_stock').value = p.stock;
+        document.getElementById('ep_estado').value = p.activo !== false ? "true" : "false";
+        new bootstrap.Modal(document.getElementById('modalEditarProducto')).show();
+    }
+
+    document.getElementById('formEditarProducto').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('ep_id').value;
+        const body = {
+            nombre: document.getElementById('ep_nombre').value,
+            categoria: document.getElementById('ep_categoria').value,
+            descripcion: document.getElementById('ep_descripcion').value,
+            precio: parseFloat(document.getElementById('ep_precio').value),
+            stock: parseInt(document.getElementById('ep_stock').value),
+            activo: document.getElementById('ep_estado').value === "true"
+        };
+        await fetch(`${API_URL}/productos/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        bootstrap.Modal.getInstance(document.getElementById('modalEditarProducto')).hide();
+        cargarResumen(); mostrarToast("Producto actualizado");
+    });
+
+    async function cambiarEstadoProducto(id) {
+        if (confirm("¿Desactivar este producto?")) {
+            await fetch(`${API_URL}/productos/${id}/estado`, { method: 'PUT' });
+            cargarResumen(); mostrarToast("Producto desactivado");
+        }
+    }
+
+    // ================== CRUD MEDICAMENTOS ==================
+    document.getElementById('formNuevoMedicamento').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+            nombre: document.getElementById('nm_nombre').value,
+            presentacion: document.getElementById('nm_presentacion').value,
+            descripcion: document.getElementById('nm_descripcion').value,
+            precio: parseFloat(document.getElementById('nm_precio').value),
+            stock: parseInt(document.getElementById('nm_stock').value),
+            categoria: document.getElementById('nm_categoria').value,
+            activo: document.getElementById('nm_estado').value === "true"
+        };
+        await fetch(`${API_URL}/medicamentos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        bootstrap.Modal.getInstance(document.getElementById('modalNuevoMedicamento')).hide();
+        e.target.reset(); cargarMedicamentos(); mostrarToast("Medicamento creado");
+    });
+
+    async function abrirModalEditarMedicamento(id) {
+        const res = await fetch(`${API_URL}/medicamentos/${id}`);
+        const m = await res.json();
+        document.getElementById('em_id').value = m.id;
+        document.getElementById('em_nombre').value = m.nombre;
+        document.getElementById('em_presentacion').value = m.presentacion || 'Tableta';
+        document.getElementById('em_descripcion').value = m.descripcion;
+        document.getElementById('em_precio').value = m.precio;
+        document.getElementById('em_stock').value = m.stock;
+        document.getElementById('em_categoria').value = m.categoria || 'Sin categoría';
+        document.getElementById('em_estado').value = m.activo !== false ? "true" : "false";
+        new bootstrap.Modal(document.getElementById('modalEditarMedicamento')).show();
+    }
+
+    document.getElementById('formEditarMedicamento').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('em_id').value;
+        const body = {
+            nombre: document.getElementById('em_nombre').value,
+            presentacion: document.getElementById('em_presentacion').value,
+            descripcion: document.getElementById('em_descripcion').value,
+            precio: parseFloat(document.getElementById('em_precio').value),
+            stock: parseInt(document.getElementById('em_stock').value),
+            categoria: document.getElementById('em_categoria').value,
+            activo: document.getElementById('em_estado').value === "true"
+        };
+        await fetch(`${API_URL}/medicamentos/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        bootstrap.Modal.getInstance(document.getElementById('modalEditarMedicamento')).hide();
+        cargarMedicamentos(); mostrarToast("Medicamento actualizado");
+    });
+
+    async function eliminarMedicamento(id) {
+        if (confirm("¿Eliminar este medicamento?")) {
+            await fetch(`${API_URL}/medicamentos/${id}`, { method: 'DELETE' });
+            cargarMedicamentos(); mostrarToast("Medicamento eliminado");
+        }
+    }
+
+    // ================== FORMULARIOS CATEGORÍAS ==================
+    document.getElementById('formNuevaCategoria').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const tipo = document.getElementById('cat_tipo').value;
+        const nombre = document.getElementById('cat_nombre').value;
+        const desc = document.getElementById('cat_descripcion').value;
+
+        if (tipo === 'producto') {
+            let nuevoId = 1;
+            if (categoriasProductosLocales.length > 0) {
+                nuevoId = Math.max(...categoriasProductosLocales.map(c => c.id)) + 1;
+            }
+            categoriasProductosLocales.push({ id: nuevoId, nombre: nombre, descripcion: desc });
+        } else {
+            let nuevoId = 1;
+            if (categoriasMedicamentosLocales.length > 0) {
+                nuevoId = Math.max(...categoriasMedicamentosLocales.map(c => c.id)) + 1;
+            }
+            categoriasMedicamentosLocales.push({ id: nuevoId, nombre: nombre, descripcion: desc });
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('modalNuevaCategoria')).hide();
+        e.target.reset();
+        renderizarCategorias();
+        mostrarToast("Categoría registrada correctamente");
+    });
+
+    document.getElementById('formEditarCategoria').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = parseInt(document.getElementById('edit_cat_id').value);
+        const nombre = document.getElementById('edit_cat_nombre').value;
+        const desc = document.getElementById('edit_cat_descripcion').value;
+        const tipo = e.target.getAttribute('data-tipo');
+
+        const lista = tipo === 'producto' ? categoriasProductosLocales : categoriasMedicamentosLocales;
+        const index = lista.findIndex(c => c.id === id);
+
+        if (index !== -1) {
+            lista[index].nombre = nombre;
+            lista[index].descripcion = desc;
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('modalEditarCategoria')).hide();
+        renderizarCategorias();
+        mostrarToast("Categoría actualizada correctamente");
+    });
+
+    window.onload = () => {
+        cargarResumen();
+        cargarMedicamentos();
+        cargarPedidos();
+    };
+</script>
+</body>
+</html>

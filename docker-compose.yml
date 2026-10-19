@@ -1,0 +1,171 @@
+services:
+  # 1. Base de Datos PostgreSQL
+  postgres-db:
+    image: postgres:15
+    container_name: vetcenter-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vetcenter
+    ports:
+      - "5432:5432"
+    networks:
+      - vetcenter-network
+
+  # 2. RabbitMQ (NUEVO)
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # Puerto de comunicación
+      - "15672:15672" # Interfaz Web
+    networks:
+      - vetcenter-network
+
+  # 3. Eureka Server
+  eureka-server:
+    build: ./EUREKA-Server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - vetcenter-network
+
+  # 4. Gateway
+  gateway-service:
+    build: ./GATEWAY-Service
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+    networks:
+      - vetcenter-network
+
+  # 5. Identity
+  identity-service:
+    build: ./IDENTITY-Service
+    container_name: identity-service
+    ports:
+      - "9005:9005"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/vetcenter
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - postgres-db
+      - eureka-server
+    networks:
+      - vetcenter-network
+
+  # 6. Cliente
+  cliente-service:
+    build: ./CLIENTE-Service
+    container_name: cliente-service
+    ports:
+      - "9001:9001"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/vetcenter
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - postgres-db
+      - eureka-server
+    networks:
+      - vetcenter-network
+
+  # 7. Mascota
+  mascota-service:
+    build: ./MASCOTA-Service
+    container_name: mascota-service
+    ports:
+      - "9004:9004"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/vetcenter
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - postgres-db
+      - eureka-server
+    networks:
+      - vetcenter-network
+
+  # 8. Medicamento
+  medicamento-service:
+    build: ./MEDICAMENTO-Service
+    container_name: medicamento-service
+    ports:
+      - "9006:9006"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/vetcenter
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - postgres-db
+      - eureka-server
+    networks:
+      - vetcenter-network
+
+  # 9. Cita (Actualizado para usar RabbitMQ)
+  cita-service:
+    build: ./CITA-Service
+    container_name: cita-service
+    ports:
+      - "9002:9002"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/vetcenter
+      SPRING_RABBITMQ_HOST: rabbitmq # <-- Conecta a RabbitMQ
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - postgres-db
+      - eureka-server
+      - rabbitmq
+    networks:
+      - vetcenter-network
+
+  # 10. Producto
+  producto-service:
+    build: ./PRODUCTO-Service
+    container_name: producto-service
+    ports:
+      - "9007:9007"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/vetcenter
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - postgres-db
+      - eureka-server
+    networks:
+      - vetcenter-network
+
+  # 11. Pedido
+  pedido-service:
+    build: ./PEDIDO-Service
+    container_name: pedido-service
+    ports:
+      - "9008:9008"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/vetcenter
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - postgres-db
+      - eureka-server
+    networks:
+      - vetcenter-network
+
+  # 12. Notification (NUEVO)
+  notification-service:
+    build: ./NOTIFICATION-Service
+    container_name: notification-service
+    ports:
+      - "9003:9003"
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq # <-- Conecta a RabbitMQ
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - rabbitmq
+      - eureka-server
+    networks:
+      - vetcenter-network
+
+networks:
+  vetcenter-network:
+    driver: bridge

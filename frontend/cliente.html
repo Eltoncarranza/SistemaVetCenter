@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VetCenter - Iniciar Sesión</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(rgba(225, 245, 238, 0.85), rgba(225, 245, 238, 0.85)),
+            url('https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?q=80&w=2070&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+        .logo-icon { color: #198754; font-size: 40px; margin-bottom: 10px; }
+        .title { color: #198754; font-weight: bold; margin-bottom: 5px; }
+        .subtitle { color: #6c757d; font-size: 14px; margin-bottom: 30px; }
+
+        .input-group-text { background-color: white; border-right: none; color: #6c757d; }
+        .form-control { border-left: none; padding-left: 0; }
+        .form-control:focus { box-shadow: none; border-color: #dee2e6; }
+        .input-group:focus-within { border-color: #198754; box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25); border-radius: 0.375rem; }
+        .input-group:focus-within .input-group-text, .input-group:focus-within .form-control { border-color: #198754; }
+
+        .btn-custom { background-color: #198754; color: white; border-radius: 10px; padding: 12px; font-weight: bold; border: none; }
+        .btn-custom:hover { background-color: #146c43; color: white; }
+        .link-custom { color: #198754; text-decoration: none; font-weight: bold; font-size: 14px;}
+        .link-custom:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="logo-icon"><i class="fa-solid fa-paw"></i></div>
+    <h2 class="title">VetCenter</h2>
+    <p class="subtitle">El bienestar de tu mascota comienza aquí.</p>
+
+    <div class="text-start mb-4">
+        <h4 class="fw-bold">Bienvenido de nuevo</h4>
+        <p class="text-muted" style="font-size: 13px;">Inicia sesión para gestionar tus mascotas, consultar sus atenciones y reservar citas.</p>
+    </div>
+
+    <form id="loginForm">
+        <div class="mb-3 text-start">
+            <label class="form-label text-muted" style="font-size: 13px;">Correo electrónico</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fa-regular fa-envelope"></i></span>
+                <input type="email" class="form-control" id="login_email" placeholder="correo@ejemplo.com" required>
+            </div>
+        </div>
+        <div class="mb-4 text-start">
+            <label class="form-label text-muted" style="font-size: 13px;">Contraseña</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                <input type="password" class="form-control" id="login_password" placeholder="Ingresa tu contraseña" required>
+                <span class="input-group-text" style="border-left: none; cursor: pointer;" onclick="togglePassword('login_password', this)">
+                        <i class="fa-regular fa-eye"></i>
+                    </span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-custom w-100 mb-3">
+            <i class="fa-solid fa-arrow-right-to-bracket me-2"></i> Iniciar sesión
+        </button>
+    </form>
+
+    <p class="text-muted" style="font-size: 14px;">¿Todavía no tienes una cuenta? <a href="registro.html" class="link-custom">Regístrate aquí</a></p>
+    <p class="text-muted mt-4" style="font-size: 12px;"><i class="fa-solid fa-shield-halved"></i> Acceso seguro a tu cuenta VetCenter</p>
+
+    <div id="mensaje" class="mt-2 fw-bold"></div>
+</div>
+
+<script>
+    const API_URL = "http://localhost:8080/api";
+
+    function togglePassword(inputId, iconElement) {
+        const input = document.getElementById(inputId);
+        if (input.type === "password") {
+            input.type = "text";
+            iconElement.innerHTML = '<i class="fa-regular fa-eye-slash"></i>';
+        } else {
+            input.type = "password";
+            iconElement.innerHTML = '<i class="fa-regular fa-eye"></i>';
+        }
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login_email').value;
+        const password = document.getElementById('login_password').value;
+        const mensajeDiv = document.getElementById('mensaje');
+
+        try {
+            const res = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                mensajeDiv.innerHTML = `<span class="text-success">${data.mensaje}</span>`;
+
+                // GUARDAMOS LOS DATOS BÁSICOS
+                localStorage.setItem('vetcenter_nombre', data.nombre);
+                localStorage.setItem('vetcenter_rol', data.rol);
+                localStorage.setItem('vetcenter_email', email);
+
+                // TRUCO DEFINITIVO: Si es CLIENTE, buscamos su ID real usando su correo
+                if (data.rol === 'CLIENTE') {
+                    const resClientes = await fetch(`${API_URL}/clientes`);
+                    const clientes = await resClientes.json();
+                    const miPerfil = clientes.find(c => c.email === email);
+
+                    if (miPerfil) {
+                        localStorage.setItem('vetcenter_clienteId', miPerfil.id);
+                    } else {
+                        // Si no tiene perfil, ponemos 1 por defecto para que no falle
+                        localStorage.setItem('vetcenter_clienteId', 1);
+                    }
+                }
+
+                setTimeout(() => {
+                    if (data.rol === 'ADMIN') {
+                        window.location.href = 'index.html';
+                    } else {
+                        window.location.href = 'cliente.html';
+                    }
+                }, 1000);
+
+            } else {
+                mensajeDiv.innerHTML = `<span class="text-danger">Credenciales incorrectas</span>`;
+            }
+        } catch (error) {
+            mensajeDiv.innerHTML = `<span class="text-danger">Error de conexión con el servidor.</span>`;
+        }
+    });
+</script>
+</body>
+</html>
+```
+
+---
+
+### 2. Código completo de `cliente.html`
+
+Reemplaza todo el contenido de tu archivo `cliente.html` por este:
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VetCenter - Mi Cuenta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f7fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-x: hidden; }
+        .sidebar { height: 100vh; width: 260px; position: fixed; background-color: #152534; padding-top: 20px; display: flex; flex-direction: column; color: white; z-index: 1000; }
+        .sidebar .brand { padding: 0 20px; font-size: 24px; font-weight: bold; color: white; text-decoration: none; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+        .sidebar .brand i { color: #20c997; }
+        .sidebar .brand span { font-size: 12px; color: #a0aec0; display: block; font-weight: normal; margin-top: -5px;}
+        .sidebar .menu-label { font-size: 11px; color: #718096; padding-left: 20px; margin-bottom: 10px; letter-spacing: 1px; font-weight: bold; }
+        .sidebar a.nav-link { color: #cbd5e0; padding: 12px 20px; margin: 4px 10px; border-radius: 8px; display: flex; align-items: center; gap: 15px; font-size: 15px; transition: 0.3s; text-decoration: none;}
+        .sidebar a.nav-link:hover, .sidebar a.nav-link.active { background-color: #1f3b52; color: white; }
+        .sidebar a.nav-link.active { border-left: 4px solid #20c997; }
+        .sidebar .logout-btn { margin-top: auto; padding: 20px; }
+        .sidebar .logout-btn a { color: #fc8181; text-decoration: none; display: flex; align-items: center; gap: 10px; border: 1px solid #4a5568; padding: 10px; border-radius: 8px; justify-content: center; }
+        .sidebar .logout-btn a:hover { background-color: #e53e3e; color: white; border-color: #e53e3e; }
+        .main-content { margin-left: 260px; padding: 30px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .header-top h2 { font-weight: 800; margin: 0; color: #1a202c; }
+        .header-top p { color: #718096; margin: 0; font-size: 14px; }
+        .user-avatar { width: 50px; height: 50px; background-color: #e6fffa; color: #198754; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; border: 2px solid transparent; transition: 0.2s;}
+        .user-avatar:hover { border-color: #198754; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .mascota-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 30px; background: white; transition: 0.2s; height: 100%;}
+        .mascota-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .mascota-icon-header { font-size: 40px; color: #1a202c; margin-bottom: 15px; }
+        .mascota-titulo { font-size: 22px; font-weight: 800; color: #1a202c; margin-bottom: 5px; }
+        .mascota-desc { font-size: 15px; color: #718096; margin-bottom: 20px; }
+        .card-custom { border-radius: 16px; border: 1px solid #e2e8f0; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+        .icon-title { width: 40px; height: 40px; border-radius: 10px; background-color: #e6fffa; color: #198754; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .input-icon-group { position: relative; }
+        .input-icon-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #a0aec0; }
+        .input-icon-group .form-control, .input-icon-group .form-select { padding-left: 45px; background-color: #f8f9fa; border-color: #e2e8f0; height: 50px; }
+        .horarios-box { background-color: #f8f9fa; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; }
+        .horario-badge { padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: 0.2s; text-align: center; }
+        .horario-disponible { border-color: #10b981; color: #10b981; background: white; }
+        .horario-disponible:hover { background: #ecfdf5; }
+        .horario-ocupado { background-color: #fee2e2; color: #ef4444; border-color: #fee2e2; cursor: not-allowed; text-decoration: line-through; }
+        .horario-seleccionado { background-color: #2563eb; color: white; border-color: #2563eb; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .dot-green { background-color: #10b981; }
+        .dot-red { background-color: #ef4444; }
+        .dot-blue { background-color: #2563eb; }
+        .modal-content { border-radius: 20px; border: none; }
+        .modal-header { border-bottom: none; padding: 30px 30px 10px 30px; }
+        .modal-body { padding: 20px 30px 30px 30px; }
+        .modal-footer { border-top: 1px solid #edf2f7; padding: 20px 30px; }
+        .icon-circle-modal { width: 45px; height: 45px; border-radius: 50%; background-color: #e6fffa; color: #198754; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .form-label-custom { font-weight: 600; color: #2d3748; font-size: 14px; }
+        .form-control, .form-select { background-color: #f8f9fa; border: 1px solid #e2e8f0; padding: 10px 15px; }
+        .form-control:focus, .form-select:focus { background-color: white; border-color: #198754; box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.1); }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <a href="#" class="brand">
+        <i class="fa-solid fa-paw"></i>
+        <div>VetCenter<span>Mi cuenta</span></div>
+    </a>
+
+    <div class="menu-label">MENÚ PRINCIPAL</div>
+    <a href="#" class="nav-link active" onclick="mostrarSeccion('inicio', this)"><i class="fa-solid fa-border-all"></i> Inicio</a>
+    <a href="#" class="nav-link" onclick="mostrarSeccion('mismascotas', this)"><i class="fa-regular fa-heart"></i> Mis mascotas</a>
+    <a href="#" class="nav-link" onclick="mostrarSeccion('agendarcita', this)"><i class="fa-regular fa-calendar-check"></i> Mis citas</a>
+    <a href="#" class="nav-link" onclick="mostrarSeccion('reservarcita', this)"><i class="fa-solid fa-calendar-plus"></i> Reservar cita</a>
+
+    <a href="tienda.html" class="nav-link"><i class="fa-solid fa-store"></i> Tienda para mascotas</a>
+
+    <div class="logout-btn">
+        <a href="login.html"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión</a>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+    <div class="header-top">
+        <div>
+            <p><i class="fa-solid fa-house me-1"></i> VetCenter / Mi cuenta</p>
+            <h2>¡Hola, <span id="nombre-cliente">Carlos</span>!</h2>
+            <p>Cuida y organiza la salud de tus mascotas.</p>
+        </div>
+        <div class="user-avatar" data-bs-toggle="modal" data-bs-target="#modalPerfil" title="Mi Perfil">
+            <i class="fa-solid fa-user"></i>
+        </div>
+    </div>
+
+    <!-- ================== INICIO ================== -->
+    <div id="sec-inicio" class="content-section active">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="p-4 bg-white rounded-4 border">
+                    <div class="text-muted mb-2">Mis mascotas</div>
+                    <div class="fs-1 fw-bold text-success" id="kpi-mis-mascotas">0</div>
+                    <div class="text-muted small">Mascotas vinculadas a mi cuenta</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 bg-white rounded-4 border">
+                    <div class="text-muted mb-2">Mis citas</div>
+                    <div class="fs-1 fw-bold text-success" id="kpi-mis-citas">0</div>
+                    <div class="text-muted small">Citas veterinarias registradas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================== MIS MASCOTAS ================== -->
+    <div id="sec-mismascotas" class="content-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1"><i class="fa-regular fa-heart text-success me-2"></i> Mis mascotas</h3>
+                <p class="text-muted mb-0">Aquí encontrarás las mascotas asociadas a tu cuenta.</p>
+            </div>
+            <button class="btn btn-success px-4 py-2" style="border-radius: 8px;" onclick="abrirModalCrearMascota()"><i class="fa-solid fa-plus me-2"></i> Registrar mascota</button>
+        </div>
+        <div class="row g-4" id="contenedor-mis-mascotas"></div>
+    </div>
+
+    <!-- ================== MIS CITAS ================== -->
+    <div id="sec-agendarcita" class="content-section">
+        <div class="mb-4">
+            <h3 class="fw-bold m-0"><i class="fa-regular fa-calendar-check text-success me-2"></i> Mis citas veterinarias</h3>
+        </div>
+
+        <div class="card-custom p-4">
+            <h6 class="fw-bold mb-1">Historial de citas</h6>
+            <p class="text-muted small mb-4">Consulta las fechas, motivos y estados de tus reservas.</p>
+
+            <table class="table table-hover align-middle">
+                <thead style="background-color: #f8fafc;">
+                <tr>
+                    <th class="border-0 text-muted small py-3">Mascota</th>
+                    <th class="border-0 text-muted small py-3">Fecha</th>
+                    <th class="border-0 text-muted small py-3">Hora</th>
+                    <th class="border-0 text-muted small py-3">Motivo</th>
+                    <th class="border-0 text-muted small py-3">Estado</th>
+                </tr>
+                </thead>
+                <tbody id="tablaMisCitas">
+                <tr><td colspan="5" class="text-center text-muted py-4">No tienes citas registradas.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ================== RESERVAR CITA ================== -->
+    <div id="sec-reservarcita" class="content-section">
+        <div class="mb-4">
+            <h3 class="fw-bold m-0"><i class="fa-solid fa-calendar-plus text-success me-2"></i> Reservar nueva cita</h3>
+        </div>
+
+        <div class="card-custom p-4 mb-4">
+            <div class="d-flex align-items-center gap-3 mb-4 border-bottom pb-4">
+                <div class="icon-title"><i class="fa-solid fa-calendar-day"></i></div>
+                <div>
+                    <h5 class="fw-bold m-0">Solicitar atención veterinaria</h5>
+                    <small class="text-muted">Completa los datos para registrar una nueva cita.</small>
+                </div>
+            </div>
+
+            <form id="formReservarCita">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label-custom">Mascota</label>
+                        <div class="input-icon-group">
+                            <i class="fa-regular fa-heart"></i>
+                            <select class="form-select" id="rc_mascota" required>
+                                <option value="">Selecciona una mascota</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label-custom">Fecha de la cita</label>
+                        <div class="input-icon-group">
+                            <i class="fa-regular fa-calendar"></i>
+                            <input type="date" class="form-control" id="rc_fecha" onchange="simularHorarios()" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label-custom">Hora de atención</label>
+                        <div class="input-icon-group">
+                            <i class="fa-regular fa-clock"></i>
+                            <input type="time" class="form-control" id="rc_hora" readonly placeholder="Selecciona un horario abajo">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Horarios -->
+                <div class="horarios-box mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="fw-bold m-0"><i class="fa-regular fa-clock me-1"></i> Horarios disponibles</h6>
+                            <small class="text-muted">Selecciona una fecha para consultar los horarios de atención.</small>
+                        </div>
+                        <span class="badge bg-white text-dark border"><i class="fa-solid fa-clock me-1"></i> Atención 24 horas</span>
+                    </div>
+
+                    <p class="text-muted small mb-3" id="texto-horarios">Selecciona una fecha para ver los horarios.</p>
+
+                    <div class="row g-2" id="contenedor-horarios" style="display: none;">
+                        <!-- Se llena con JS -->
+                    </div>
+
+                    <div class="d-flex gap-4 mt-3 small text-muted">
+                        <div><span class="dot dot-green"></span> Disponible</div>
+                        <div><span class="dot dot-red"></span> Ocupado</div>
+                        <div><span class="dot dot-blue"></span> Seleccionado</div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label-custom">Motivo de la consulta</label>
+                    <div class="input-icon-group">
+                        <i class="fa-regular fa-file-lines"></i>
+                        <input type="text" class="form-control" id="rc_motivo" placeholder="Ej. Consulta general" required>
+                    </div>
+                </div>
+
+                <div class="alert alert-info d-flex align-items-center mb-4" style="background-color: #e0f2fe; border: none; color: #0369a1;">
+                    <i class="fa-solid fa-circle-info fs-5 me-3"></i>
+                    <small>Selecciona la mascota, fecha y hora en la que deseas solicitar atención. Podrás consultar el estado de tu cita en la sección Mis citas.</small>
+                </div>
+
+                <div class="text-end">
+                    <button type="submit" class="btn btn-success px-4 py-2" style="border-radius: 8px;"><i class="fa-solid fa-calendar-check me-2"></i> Confirmar reserva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<!-- ================== MODALES ================== -->
+<!-- Modal Registrar Mascota -->
+<div class="modal fade" id="modalNuevaMascota" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="icon-circle-modal"><i class="fa-solid fa-paw"></i></div>
+                    <div>
+                        <h5 class="modal-title fw-bold m-0" style="font-size: 22px;">Registrar nueva mascota</h5>
+                        <small class="text-muted">Agrega una mascota a tu cuenta VetCenter.</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNuevaMascotaCliente">
+                    <div class="mb-4">
+                        <label class="form-label-custom">Nombre de la mascota <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="mc_nombre" placeholder="Ej. Max" required>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <label class="form-label-custom">Especie <span class="text-danger">*</span></label>
+                            <select class="form-select" id="mc_especie" required>
+                                <option value="">Selecciona una especie</option>
+                                <option value="Perro">Perro</option>
+                                <option value="Gato">Gato</option>
+                                <option value="Ave">Ave</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-custom">Sexo</label>
+                            <select class="form-select" id="mc_sexo">
+                                <option value="">Selecciona el sexo</option>
+                                <option value="Macho">Macho</option>
+                                <option value="Hembra">Hembra</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label-custom">Raza</label>
+                        <input type="text" class="form-control" id="mc_raza" placeholder="Ej. Labrador o mestizo">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNuevaMascotaCliente" class="btn btn-success"><i class="fa-solid fa-check-circle me-1"></i> Registrar mascota</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Mascota -->
+<div class="modal fade" id="modalEditarMascota" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="icon-circle-modal"><i class="fa-solid fa-paw"></i></div>
+                    <div>
+                        <h5 class="modal-title fw-bold m-0" style="font-size: 22px;">Editar mascota</h5>
+                        <small class="text-muted">Actualiza los datos de tu mascota.</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarMascotaCliente">
+                    <input type="hidden" id="em_id">
+                    <div class="mb-4">
+                        <label class="form-label-custom">Nombre de la mascota <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="em_nombre" required>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <label class="form-label-custom">Especie <span class="text-danger">*</span></label>
+                            <select class="form-select" id="em_especie" required>
+                                <option value="Perro">Perro</option>
+                                <option value="Gato">Gato</option>
+                                <option value="Ave">Ave</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label-custom">Sexo</label>
+                            <select class="form-select" id="em_sexo">
+                                <option value="Macho">Macho</option>
+                                <option value="Hembra">Hembra</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label-custom">Raza</label>
+                        <input type="text" class="form-control" id="em_raza">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formEditarMascotaCliente" class="btn btn-success"><i class="fa-solid fa-save me-1"></i> Guardar cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Perfil -->
+<div class="modal fade" id="modalPerfil" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light"><h5 class="modal-title fw-bold">Mi perfil</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <form id="formPerfil">
+                    <div class="row mb-3">
+                        <div class="col-md-6"><label class="form-label text-muted small">Nombres</label><input type="text" class="form-control" id="perfil_nombre" required></div>
+                        <div class="col-md-6"><label class="form-label text-muted small">DNI</label><input type="text" class="form-control" id="perfil_dni" readonly></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6"><label class="form-label text-muted small">Teléfono</label><input type="text" class="form-control" id="perfil_telefono" required></div>
+                        <div class="col-md-6"><label class="form-label text-muted small">Dirección</label><input type="text" class="form-control" id="perfil_direccion" readonly></div>
+                    </div>
+                    <div class="mb-3"><label class="form-label text-muted small">Correo electrónico</label><input type="email" class="form-control" id="perfil_email" readonly></div>
+                    <div class="text-end"><button type="submit" class="btn btn-success">Guardar cambios</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const API_URL = "http://localhost:8080/api";
+
+    // LÓGICA CORREGIDA: Lee el ID real que guardó el login
+    const ID_CLIENTE_LOGUEADO = parseInt(localStorage.getItem('vetcenter_clienteId')) || 1;
+    let misMascotasGlobal = [];
+
+    const nombreGuardado = localStorage.getItem('vetcenter_nombre');
+    if(nombreGuardado) document.getElementById('nombre-cliente').innerText = nombreGuardado;
+
+    function mostrarSeccion(seccion, element) {
+        document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+        document.getElementById(`sec-${seccion}`).classList.add('active');
+        document.querySelectorAll('.sidebar .nav-link').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+    }
+
+    // ================== CARGAR DATOS ==================
+    async function cargarDatosCliente() {
+        try {
+            // Mascotas
+            const resMascotas = await fetch(`${API_URL}/mascotas`);
+            const todasMascotas = await resMascotas.json();
+            misMascotasGlobal = todasMascotas.filter(m => m.clienteId === ID_CLIENTE_LOGUEADO);
+
+            document.getElementById('kpi-mis-mascotas').innerText = misMascotasGlobal.length;
+            renderizarMisMascotas(misMascotasGlobal);
+            llenarSelectMascotas(misMascotasGlobal);
+
+            // Citas
+            const resCitas = await fetch(`${API_URL}/citas`);
+            const todasCitas = await resCitas.json();
+            const misCitas = todasCitas.filter(c => c.clienteId === ID_CLIENTE_LOGUEADO);
+            document.getElementById('kpi-mis-citas').innerText = misCitas.length;
+            renderizarMisCitas(misCitas);
+
+            // Perfil
+            const resPerfil = await fetch(`${API_URL}/clientes/${ID_CLIENTE_LOGUEADO}`);
+            if(resPerfil.ok) {
+                const perfil = await resPerfil.json();
+                document.getElementById('perfil_nombre').value = perfil.nombre;
+                document.getElementById('perfil_telefono').value = perfil.telefono;
+                document.getElementById('perfil_email').value = perfil.email;
+                document.getElementById('perfil_dni').value = perfil.dni;
+                document.getElementById('perfil_direccion').value = perfil.direccion;
+            }
+        } catch (e) { console.log("Error cargando datos", e); }
+    }
+
+    // ================== RENDERIZAR MASCOTAS ==================
+    function renderizarMisMascotas(mascotas) {
+        const contenedor = document.getElementById('contenedor-mis-mascotas');
+        if (mascotas.length === 0) {
+            contenedor.innerHTML = `<div class="col-12 text-center text-muted py-5"><i class="fa-solid fa-paw fs-1 mb-3"></i><p>No tienes mascotas registradas aún.</p></div>`;
+            return;
+        }
+        contenedor.innerHTML = mascotas.map(m => `
+                <div class="col-md-6 col-lg-5">
+                    <div class="mascota-card">
+                        <div class="mascota-icon-header"><i class="fa-solid fa-heart-pulse"></i></div>
+                        <div class="mascota-titulo">${m.nombre}</div>
+                        <div class="mascota-desc">${m.especie} · ${m.raza || 'mestizo'}</div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-primary btn-sm px-3" onclick="abrirModalEditarMascota(${m.id})"><i class="fa-solid fa-pen me-1"></i> Editar</button>
+                            <button class="btn btn-outline-danger btn-sm px-3" onclick="eliminarMascota(${m.id})"><i class="fa-solid fa-trash me-1"></i> Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    function llenarSelectMascotas(mascotas) {
+        const select = document.getElementById('rc_mascota');
+        select.innerHTML = mascotas.length === 0 ? `<option value="">Primero registra una mascota</option>` : `<option value="">Selecciona una mascota</option>` + mascotas.map(m => `<option value="${m.id}">${m.nombre}</option>`).join('');
+    }
+
+    // ================== RENDERIZAR MIS CITAS ==================
+    function renderizarMisCitas(citas) {
+        const tbody = document.getElementById('tablaMisCitas');
+        if (citas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No tienes citas registradas.</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = citas.map(c => {
+            const mascota = misMascotasGlobal.find(m => m.id === c.mascotaId);
+            const nombreMascota = mascota ? mascota.nombre : `Mascota #${c.mascotaId}`;
+
+            let badge = '';
+            if (c.estado === 'PENDIENTE') badge = `<span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="fa-solid fa-clock me-1"></i> PENDIENTE</span>`;
+            else if (c.estado === 'CANCELADA') badge = `<span class="badge bg-secondary rounded-pill px-3 py-2"><i class="fa-solid fa-ban me-1"></i> CANCELADA</span>`;
+            else if (c.estado === 'ATENDIDA') badge = `<span class="badge bg-success rounded-pill px-3 py-2"><i class="fa-solid fa-check me-1"></i> ATENDIDA</span>`;
+            else badge = `<span class="badge bg-primary rounded-pill px-3 py-2"><i class="fa-solid fa-calendar-check me-1"></i> CONFIRMADA</span>`;
+
+            return `
+                <tr>
+                    <td class="fw-bold py-3">${nombreMascota}</td>
+                    <td class="py-3">${c.fecha}</td>
+                    <td class="py-3">${c.hora}</td>
+                    <td class="py-3">${c.motivo}</td>
+                    <td class="py-3">${badge}</td>
+                </tr>
+                `;
+        }).join('');
+    }
+
+    // ================== SIMULACIÓN DE HORARIOS ==================
+    function simularHorarios() {
+        const fecha = document.getElementById('rc_fecha').value;
+        const contenedor = document.getElementById('contenedor-horarios');
+        const texto = document.getElementById('texto-horarios');
+
+        if (!fecha) {
+            contenedor.style.display = 'none';
+            texto.innerText = 'Selecciona una fecha para ver los horarios.';
+            return;
+        }
+
+        texto.innerText = 'Horarios de atención para la fecha seleccionada:';
+        contenedor.style.display = 'flex';
+
+        const horas = ['08:00', '09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+
+        contenedor.innerHTML = horas.map((h) => {
+            let clase = 'horario-disponible';
+            let onClick = `seleccionarHora('${h}', this)`;
+
+            if (h === '09:00' || h === '15:00') {
+                clase = 'horario-ocupado';
+                onClick = '';
+            }
+
+            return `<div class="col-md-2">
+                            <div class="horario-badge ${clase}" onclick="${onClick}">
+                                ${h}
+                            </div>
+                        </div>`;
+        }).join('');
+    }
+
+    function seleccionarHora(hora, element) {
+        document.querySelectorAll('.horario-badge').forEach(el => {
+            if(!el.classList.contains('horario-ocupado')) {
+                el.classList.remove('horario-seleccionado');
+                el.classList.add('horario-disponible');
+            }
+        });
+        element.classList.remove('horario-disponible');
+        element.classList.add('horario-seleccionado');
+
+        document.getElementById('rc_hora').value = hora;
+    }
+
+    // ================== ACCIONES MASCOTAS ==================
+    function abrirModalCrearMascota() {
+        document.getElementById('formNuevaMascotaCliente').reset();
+        new bootstrap.Modal(document.getElementById('modalNuevaMascota')).show();
+    }
+
+    async function abrirModalEditarMascota(id) {
+        try {
+            const res = await fetch(`${API_URL}/mascotas/${id}`);
+            if (!res.ok) { alert("No se encontró la mascota"); return; }
+            const m = await res.json();
+
+            document.getElementById('em_id').value = m.id;
+            document.getElementById('em_nombre').value = m.nombre;
+            document.getElementById('em_especie').value = m.especie;
+            document.getElementById('em_sexo').value = m.sexo || 'Macho';
+            document.getElementById('em_raza').value = m.raza || '';
+
+            new bootstrap.Modal(document.getElementById('modalEditarMascota')).show();
+        } catch (e) { console.log(e); }
+    }
+
+    async function eliminarMascota(id) {
+        if(confirm("¿Estás seguro de eliminar esta mascota?")) {
+            try {
+                await fetch(`${API_URL}/mascotas/${id}`, { method: 'DELETE' });
+                cargarDatosCliente();
+                alert("Mascota eliminada");
+            } catch (e) { console.log(e); }
+        }
+    }
+
+    // ================== FORMULARIOS ==================
+    document.getElementById('formNuevaMascotaCliente').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+            nombre: document.getElementById('mc_nombre').value,
+            especie: document.getElementById('mc_especie').value,
+            raza: document.getElementById('mc_raza').value || 'mestizo',
+            sexo: document.getElementById('mc_sexo').value,
+            edad: 1,
+            clienteId: ID_CLIENTE_LOGUEADO // <-- SE GUARDA CON EL ID REAL
+        };
+        try {
+            await fetch(`${API_URL}/mascotas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevaMascota')).hide();
+            e.target.reset(); cargarDatosCliente(); alert("¡Mascota registrada!");
+        } catch (error) { console.error(error); }
+    });
+
+    document.getElementById('formEditarMascotaCliente').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('em_id').value;
+        const body = {
+            nombre: document.getElementById('em_nombre').value,
+            especie: document.getElementById('em_especie').value,
+            raza: document.getElementById('em_raza').value,
+            sexo: document.getElementById('em_sexo').value,
+            edad: 1,
+            clienteId: ID_CLIENTE_LOGUEADO // <-- SE GUARDA CON EL ID REAL
+        };
+        try {
+            await fetch(`${API_URL}/mascotas/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            bootstrap.Modal.getInstance(document.getElementById('modalEditarMascota')).hide();
+            cargarDatosCliente(); alert("¡Mascota actualizada!");
+        } catch (error) { console.error(error); }
+    });
+
+    document.getElementById('formReservarCita').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const horaSeleccionada = document.getElementById('rc_hora').value;
+        if(!horaSeleccionada) {
+            alert("Por favor, selecciona un horario disponible haciendo clic en el panel de horarios.");
+            return;
+        }
+
+        const body = {
+            fecha: document.getElementById('rc_fecha').value,
+            hora: horaSeleccionada + ":00",
+            motivo: document.getElementById('rc_motivo').value,
+            clienteId: ID_CLIENTE_LOGUEADO, // <-- SE GUARDA CON EL ID REAL
+            mascotaId: parseInt(document.getElementById('rc_mascota').value),
+            estado: "PENDIENTE"
+        };
+        try {
+            await fetch(`${API_URL}/citas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            e.target.reset();
+            document.getElementById('contenedor-horarios').style.display = 'none';
+            document.getElementById('texto-horarios').innerText = 'Selecciona una fecha para ver los horarios.';
+            cargarDatosCliente();
+            alert("¡Cita reservada con éxito!");
+            document.querySelector('.nav-link[onclick*="agendarcita"]').click();
+        } catch (error) { console.error(error); }
+    });
+
+    // FORMULARIO DE PERFIL CORREGIDO (NO BORRA DATOS REALES)
+    document.getElementById('formPerfil').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+            nombre: document.getElementById('perfil_nombre').value,
+            dni: document.getElementById('perfil_dni').value,
+            email: document.getElementById('perfil_email').value,
+            telefono: document.getElementById('perfil_telefono').value,
+            direccion: document.getElementById('perfil_direccion').value
+        };
+        try {
+            await fetch(`${API_URL}/clientes/${ID_CLIENTE_LOGUEADO}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            alert("Datos actualizados correctamente");
+            cargarDatosCliente();
+        } catch (error) { console.error(error); }
+    });
+
+    window.onload = () => {
+        cargarDatosCliente();
+    };
+</script>
+</body>
+</html>
